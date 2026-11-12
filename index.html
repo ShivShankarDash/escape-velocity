@@ -1,0 +1,1967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escape Velocity</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1e1b4b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root { color-scheme: light;
+  --ink:#1e1b4b; --muted:#5b5f7a; --paper:#ffffff;
+  --sd:#2563eb; --ai:#7c3aed; --cc:#ea580c; --career:#059669; --move:#e11d48; --side:#db2777;
+  --gold:#f59e0b; --grass:#22c55e; --display: "Arial Black", "Trebuchet MS", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing:border-box; }
+body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color:var(--ink); font-size:14px;
+  background: linear-gradient(180deg, #bfe3ff 0px, #e0f2fe 220px, #f0fdf4 600px, #ecfccb 100%); min-height:100vh; }
+a { color:inherit; }
+button { font-family:inherit; }
+.card { background:var(--paper); border:3px solid var(--ink); border-radius:16px; box-shadow:5px 5px 0 var(--ink); padding:16px; }
+.h { font-family:var(--display); text-transform:uppercase; letter-spacing:.8px; margin:0 0 10px; font-size:14px; }
+.btn { font-weight:800; border:3px solid var(--ink); border-radius:12px; background:#fff; padding:7px 12px; cursor:pointer; box-shadow:3px 3px 0 var(--ink); font-size:13px; transition: transform .05s; }
+.btn:active { transform: translate(3px,3px); box-shadow:0 0 0 var(--ink); }
+.btn.go { background:#facc15; }
+.btn.blue { background:#60a5fa; color:#fff; }
+.btn.red { background:#fecaca; }
+.btn.sm { padding:4px 9px; font-size:12px; box-shadow:2px 2px 0 var(--ink); border-width:2px; }
+.hidden { display:none !important; }
+
+/* HUD */
+.hud { padding:14px 18px 10px; }
+.hudrow { display:flex; gap:14px; align-items:stretch; flex-wrap:wrap; }
+.player { display:flex; gap:12px; align-items:center; flex:1 1 320px; }
+.avatar { width:66px; height:66px; border:3px solid var(--ink); border-radius:16px; background:#fef3c7; box-shadow:3px 3px 0 var(--ink); flex:none; }
+.pname { font-family:var(--display); font-size:18px; }
+.ptitle { font-weight:700; color:var(--muted); font-size:12.5px; }
+.xpbar { margin-top:6px; height:16px; border:3px solid var(--ink); border-radius:10px; background:#fff; overflow:hidden; position:relative; }
+.xpfill { height:100%; background: repeating-linear-gradient(45deg,#facc15,#facc15 10px,#fbbf24 10px,#fbbf24 20px); }
+.xptext { position:absolute; inset:0; font-size:10.5px; font-weight:900; display:flex; align-items:center; justify-content:center; font-family:var(--mono); }
+.stats { display:flex; gap:10px; flex-wrap:wrap; }
+.stat { background:#fff; border:3px solid var(--ink); border-radius:14px; box-shadow:3px 3px 0 var(--ink); padding:7px 12px; min-width:96px; }
+.stat .k { font-size:10.5px; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:.6px; }
+.stat .v { font-family:var(--mono); font-size:19px; font-weight:900; margin-top:2px; }
+nav { display:flex; gap:8px; padding:10px 18px 12px; overflow-x:auto; position:sticky; top:0; z-index:10; background: rgba(224,242,254,.92); backdrop-filter: blur(4px); border-bottom:3px solid var(--ink); }
+nav button { font-family:var(--display); text-transform:uppercase; font-size:12px; letter-spacing:.5px; border:3px solid var(--ink); border-radius:12px; background:#fff; padding:8px 12px; cursor:pointer; box-shadow:3px 3px 0 var(--ink); white-space:nowrap; }
+nav button.on { background:#facc15; transform: translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
+main { padding:18px; max-width:1320px; margin:0 auto 40px; }
+.cols { display:grid; grid-template-columns: minmax(0,1fr) 330px; gap:18px; }
+@media (max-width: 960px) { .cols { grid-template-columns:1fr; } }
+
+/* Today */
+.holehead { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+.holeno { font-family:var(--display); font-size:30px; line-height:1; }
+.holesub { color:var(--muted); font-weight:700; margin-top:4px; }
+.ring { width:92px; height:92px; flex:none; }
+.result { display:inline-block; font-family:var(--display); font-size:12px; padding:4px 10px; border:2px solid var(--ink); border-radius:999px; margin-top:6px; }
+.chips { display:flex; gap:6px; flex-wrap:wrap; margin:12px 0 4px; }
+.chip { font-size:11.5px; font-weight:800; padding:3px 9px; border-radius:999px; border:2px solid; background:#fff; }
+.daynav { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+.sect { font-family:var(--display); text-transform:uppercase; font-size:13px; margin:18px 0 10px; display:flex; align-items:center; gap:8px; }
+.sect:after { content:""; flex:1; height:3px; background:var(--ink); border-radius:2px; opacity:.15; }
+.quest { position:relative; display:flex; gap:12px; background:#fff; border:3px solid var(--ink); border-radius:14px; box-shadow:4px 4px 0 var(--ink); padding:12px 14px; margin-bottom:12px; }
+.quest .stripe { width:8px; border-radius:6px; flex:none; background:var(--c); }
+.quest.done { background:#f8fafc; }
+.quest.done .qt { text-decoration: line-through; opacity:.6; }
+.quest.boss { background: linear-gradient(135deg,#fff7ed,#fef2f2); border-color:#7f1d1d; box-shadow:4px 4px 0 #7f1d1d; }
+.quest.side { border-style:dashed; box-shadow:3px 3px 0 #9d174d; border-color:#9d174d; }
+.qbody { flex:1; min-width:0; }
+.qtag { font-size:10.5px; font-weight:900; letter-spacing:.7px; text-transform:uppercase; color:var(--c); }
+.qt { font-weight:800; font-size:15.5px; margin-top:2px; }
+.qd { color:#3f4458; margin-top:5px; line-height:1.5; font-size:13.5px; white-space: pre-line; }
+.links { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+.lk { font-size:11.5px; font-weight:700; text-decoration:none; border:2px solid var(--ink); border-radius:8px; padding:2px 8px; background:#f1f5f9; }
+.lk.main { background:#e0e7ff; }
+.lk.watch { background:#fee2e2; }
+.qmeta { display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap; font-size:12px; color:var(--muted); font-weight:700; }
+.xp { background:#facc15; color:var(--ink); border:2px solid var(--ink); font-family:var(--mono); font-weight:900; padding:1px 7px; border-radius:8px; font-size:11.5px; }
+.coin { background:#fde68a; border:2px solid var(--ink); font-family:var(--mono); font-weight:900; padding:1px 7px; border-radius:8px; font-size:11.5px; }
+.bossbadge { background:#7f1d1d; color:#fff; font-weight:900; font-size:10.5px; letter-spacing:.8px; padding:2px 8px; border-radius:6px; }
+.complete { align-self:center; flex:none; font-family:var(--display); font-size:11px; text-transform:uppercase; border:3px solid var(--ink); border-radius:12px; padding:10px 10px; min-width:96px; cursor:pointer; background:#bbf7d0; box-shadow:3px 3px 0 var(--ink); }
+.complete:active { transform: translate(3px,3px); box-shadow:none; }
+.quest.done .complete { background:#e2e8f0; }
+.log { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+@media (max-width: 700px) { .log { grid-template-columns:1fr; } }
+.log label { font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); display:block; margin-bottom:4px; }
+textarea, input[type=text], input[type=number] { width:100%; border:3px solid var(--ink); border-radius:10px; padding:8px 10px; font: inherit; background:#fff; }
+textarea { min-height:80px; resize:vertical; }
+.energy { display:flex; gap:6px; }
+.energy button { flex:1; border:2px solid var(--ink); border-radius:8px; background:#fff; padding:6px 0; font-weight:900; cursor:pointer; }
+.energy button.on { background:#facc15; }
+.timer { font-family:var(--mono); font-size:44px; font-weight:900; text-align:center; margin:4px 0; }
+.tlabel { text-align:center; color:var(--muted); font-size:12px; font-weight:700; min-height:16px; }
+.trow { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-top:8px; }
+.mini { font-size:12.5px; padding:8px 0; border-bottom:2px dashed #e2e8f0; display:flex; gap:8px; align-items:center; }
+.mini:last-child { border-bottom:0; }
+.dot { width:10px; height:10px; border-radius:50%; flex:none; border:2px solid var(--ink); }
+.mini .c2 { flex:1; min-width:0; }
+.mini .dt { color:var(--muted); font-size:11px; font-weight:700; }
+.hpwrap { height:12px; border:2px solid var(--ink); border-radius:8px; background:#fee2e2; overflow:hidden; margin-top:4px; }
+.hpfill { height:100%; background:linear-gradient(90deg,#ef4444,#f97316); transition: width .4s; }
+
+/* Map */
+.mapbar { display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+.mapwrap { background:#86efac; border:3px solid var(--ink); border-radius:18px; box-shadow:5px 5px 0 var(--ink); overflow:hidden; }
+.mapwrap svg { display:block; width:100%; height:auto; }
+.hole { cursor:pointer; }
+.legend { display:flex; gap:12px; flex-wrap:wrap; font-size:12px; font-weight:800; margin-top:12px; }
+.legend span { display:inline-flex; align-items:center; gap:6px; }
+.lg { width:14px; height:14px; border-radius:50%; border:2px solid var(--ink); display:inline-block; }
+.track { height:22px; border:3px solid var(--ink); border-radius:12px; background:#fff; position:relative; overflow:hidden; flex:1; min-width:220px; }
+.trackfill { height:100%; background: repeating-linear-gradient(90deg,#22c55e,#22c55e 12px,#16a34a 12px,#16a34a 24px); }
+
+/* Arena */
+.arena { display:grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap:16px; }
+.boss { position:relative; background:#fff; border:3px solid var(--ink); border-radius:16px; box-shadow:5px 5px 0 var(--ink); padding:14px; overflow:hidden; }
+.boss.active { background: linear-gradient(160deg,#fff,#fff7ed); }
+.boss.locked { background:#f1f5f9; }
+.boss.won { background:#f0fdf4; }
+.boss.overdue { background:#fef2f2; border-color:#991b1b; }
+.boss svg { width:120px; height:110px; display:block; margin:0 auto 6px; }
+.bname { font-family:var(--display); font-size:16px; text-align:center; }
+.bsub { text-align:center; color:var(--muted); font-weight:700; font-size:12px; margin-top:2px; }
+.bstate { position:absolute; top:10px; right:10px; font-size:10px; font-weight:900; letter-spacing:.7px; padding:3px 7px; border-radius:6px; border:2px solid var(--ink); background:#fff; }
+.stamp { position:absolute; top:46px; left:50%; transform: translateX(-50%) rotate(-14deg); font-family:var(--display); font-size:22px; color:#16a34a; border:4px solid #16a34a; padding:2px 10px; border-radius:8px; background:rgba(255,255,255,.85); }
+.bfoot { font-size:12px; margin-top:10px; line-height:1.4; }
+.hpnum { font-family:var(--mono); font-weight:900; font-size:12px; display:flex; justify-content:space-between; margin-top:8px; }
+
+/* Scorecard */
+.week { display:grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap:10px; }
+@media (max-width: 960px) { .week { grid-template-columns:1fr; } }
+.wday { background:#fff; border:3px solid var(--ink); border-radius:14px; padding:10px; cursor:pointer; min-height:190px; box-shadow:3px 3px 0 var(--ink); }
+.wday.today { background:#fefce8; }
+.wday h4 { margin:0; font-size:13px; font-family:var(--display); }
+.wday .pct { font-size:11px; color:var(--muted); font-weight:700; margin:3px 0 8px; }
+.wtask { font-size:11.5px; padding:5px 7px; border-radius:7px; margin-bottom:5px; border-left:4px solid var(--c); background:#f8fafc; font-weight:600; }
+.wtask.done { text-decoration:line-through; opacity:.5; }
+table.sc { width:100%; border-collapse:separate; border-spacing:4px; }
+table.sc th { font-size:11px; font-weight:900; text-transform:uppercase; color:var(--muted); }
+table.sc td { text-align:center; border:2px solid var(--ink); border-radius:8px; padding:5px 2px; font-size:11px; font-weight:800; cursor:pointer; background:#fff; }
+table.sc td.off { border-style:dashed; opacity:.35; cursor:default; }
+table.sc td.tot { font-family:var(--mono); background:#fef3c7; cursor:default; }
+
+/* Trophies */
+.sgrid { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap:10px; margin-bottom:16px; }
+.badges { display:grid; grid-template-columns: repeat(auto-fill, minmax(165px,1fr)); gap:12px; }
+.badge { border:3px solid var(--ink); border-radius:14px; padding:12px; background:#fff; box-shadow:3px 3px 0 var(--ink); }
+.badge.locked { opacity:.4; filter: grayscale(1); }
+.badge .bi { width:40px; height:40px; border-radius:12px; border:3px solid var(--ink); display:flex; align-items:center; justify-content:center; font-family:var(--display); font-size:12px; background:linear-gradient(135deg,#facc15,#f97316); margin-bottom:8px; }
+.badge .bt { font-weight:900; }
+.badge .bd { color:var(--muted); font-size:12px; margin-top:3px; font-weight:600; }
+.tbar { margin-bottom:12px; }
+.tbar .tl { display:flex; justify-content:space-between; font-size:12.5px; font-weight:800; margin-bottom:4px; }
+.tbar .b { height:14px; border:2px solid var(--ink); border-radius:8px; background:#fff; overflow:hidden; }
+.tbar .b > div { height:100%; }
+
+/* Library */
+.lib { display:grid; grid-template-columns: repeat(auto-fill, minmax(290px,1fr)); gap:16px; }
+.lib ul { margin:0; padding-left:18px; }
+.lib li { margin:6px 0; line-height:1.35; }
+.lib li a { font-weight:700; }
+.lib li span { color:var(--muted); font-size:12px; }
+
+/* Shop */
+.reward { display:flex; gap:10px; align-items:center; border:3px solid var(--ink); border-radius:12px; padding:10px 12px; margin-bottom:10px; background:#fff; box-shadow:3px 3px 0 var(--ink); }
+.reward .rn { flex:1; font-weight:800; }
+
+/* FX */
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:10px 18px; border-radius:14px; font-weight:800; opacity:0; transition:all .25s; pointer-events:none; z-index:50; border:3px solid #facc15; }
+.toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
+#fx { position:fixed; inset:0; pointer-events:none; z-index:60; }
+.modal { position:fixed; inset:0; background:rgba(30,27,75,.55); display:flex; align-items:center; justify-content:center; z-index:70; }
+.modal .card { max-width:420px; text-align:center; animation: pop .35s ease-out; }
+.modal svg { width:150px; height:140px; }
+.modal .big { font-family:var(--display); font-size:24px; margin:6px 0; }
+@keyframes pop { from { transform: scale(.6); opacity:0; } to { transform: scale(1); opacity:1; } }
+.hint { color:var(--muted); font-size:12.5px; line-height:1.5; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="hud">
+  <div class="hudrow">
+    <div class="player">
+      <svg class="avatar" id="avatar" viewBox="0 0 66 66"></svg>
+      <div style="flex:1;min-width:0">
+        <div class="pname" id="pName">Player 1</div>
+        <div class="ptitle" id="pTitle">Level 1</div>
+        <div class="xpbar"><div class="xpfill" id="xpFill" style="width:0%"></div><div class="xptext" id="xpText"></div></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">Hole</div><div class="v" id="sHole">-</div></div>
+      <div class="stat"><div class="k">Streak</div><div class="v" id="sStreak">-</div></div>
+      <div class="stat"><div class="k">Course score</div><div class="v" id="sScore">-</div></div>
+      <div class="stat"><div class="k">Bosses</div><div class="v" id="sBoss">-</div></div>
+      <div class="stat"><div class="k">Coins</div><div class="v" id="sCoins">-</div></div>
+      <div class="stat"><div class="k">Hiring wave</div><div class="v" id="sWave">-</div></div>
+    </div>
+  </div>
+</div>
+<nav id="nav">
+  <button data-tab="today" class="on">Today's Round</button>
+  <button data-tab="map">Course Map</button>
+  <button data-tab="arena">Boss Arena</button>
+  <button data-tab="score">Scorecard</button>
+  <button data-tab="trophies">Trophies</button>
+  <button data-tab="body">Body</button>
+  <button data-tab="library">Library</button>
+  <button data-tab="shop">Loot Shop</button>
+  <button data-tab="save">Save Slot</button>
+</nav>
+<main>
+  <section id="tab-today">
+    <div class="cols">
+      <div>
+        <div class="daynav">
+          <button class="btn" id="prevDay">&larr; Prev hole</button>
+          <button class="btn" id="nextDay">Next hole &rarr;</button>
+          <button class="btn go" id="goToday">Back to today</button>
+        </div>
+        <div class="card">
+          <div class="holehead">
+            <svg class="ring" viewBox="0 0 100 100" id="ring"></svg>
+            <div style="flex:1;min-width:0">
+              <div class="holeno" id="dHole"></div>
+              <div class="holesub" id="dSub"></div>
+              <span class="result" id="dResult"></span>
+            </div>
+          </div>
+          <div class="chips" id="dChips"></div>
+          <div class="sect">Main quests</div>
+          <div id="dQuests"></div>
+          <div class="sect">Side quests <span class="hint" style="text-transform:none;font-family:inherit">bonus XP and coins, not needed for par</span></div>
+          <div id="dSides"></div>
+          <div class="sect">Round log</div>
+          <div class="log">
+            <div><label>Hours studied</label><input type="number" id="lHours" min="0" max="16" step="0.5" placeholder="e.g. 3"></div>
+            <div><label>Morning weight (kg)</label><input type="number" id="lWeight" min="40" max="200" step="0.1" placeholder="e.g. 92.4"></div>
+            <div><label>Energy</label><div class="energy" id="lEnergy"></div></div>
+            <div><label>What I learned today</label><textarea id="lLearned" placeholder="One or two lines in your own words."></textarea></div>
+            <div><label>Where I got stuck</label><textarea id="lBlocker" placeholder="Anything that blocked you. Tomorrow-you will thank you."></textarea></div>
+          </div>
+          <div class="hint" style="margin-top:6px">Fill in hours and what you learned to auto-complete the "Log your round" side quest.</div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="h">Focus timer</div>
+          <div class="tlabel" id="tLabel">Hit Focus on any quest</div>
+          <div class="timer" id="tClock">50:00</div>
+          <div class="trow">
+            <button class="btn sm" data-min="25">25</button>
+            <button class="btn sm" data-min="50">50</button>
+            <button class="btn sm" data-min="90">90</button>
+            <button class="btn sm go" id="tStart">Start</button>
+            <button class="btn sm" id="tReset">Reset</button>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="h">Bosses in play</div>
+          <div id="liveBosses"></div>
+        </div>
+        <div class="card">
+          <div class="h">Catch-up queue</div>
+          <div class="hint" style="margin-bottom:4px">Missed quests from earlier holes. Still worth XP.</div>
+          <div id="catchup"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-map" class="hidden">
+    <div class="card" style="margin-bottom:16px">
+      <div class="mapbar">
+        <div><div class="h" style="margin:0">The Course</div><div class="hint" id="mapSub"></div></div>
+        <div class="track"><div class="trackfill" id="mapFill" style="width:0%"></div></div>
+        <button class="btn go" id="mapFind">Find my ball</button>
+      </div>
+      <div class="legend">
+        <span><i class="lg" style="background:#f59e0b"></i>Birdie: 100%</span>
+        <span><i class="lg" style="background:#22c55e"></i>Par: 70%+</span>
+        <span><i class="lg" style="background:#fb923c"></i>Bogey: 40-69%</span>
+        <span><i class="lg" style="background:#ef4444"></i>Double bogey: under 40%</span>
+        <span><i class="lg" style="background:#fef08a"></i>In play</span>
+        <span><i class="lg" style="background:#fff"></i>Upcoming</span>
+        <span><i class="lg" style="background:#7f1d1d"></i>Boss flag</span>
+      </div>
+    </div>
+    <div class="mapwrap" id="mapWrap"></div>
+  </section>
+
+  <section id="tab-arena" class="hidden">
+    <div class="card" style="margin-bottom:16px">
+      <div class="h">Boss Arena</div>
+      <div class="hint">Every phase has a boss. Each quest you finish in that phase deals damage equal to its XP. The boss fight quest is the finishing blow. Bosses still standing after their date stay on the board until you take them down.</div>
+    </div>
+    <div class="arena" id="arena"></div>
+  </section>
+
+  <section id="tab-score" class="hidden">
+    <div class="card" style="margin-bottom:16px">
+      <div class="daynav" style="margin-bottom:10px">
+        <button class="btn" id="prevWeek">&larr; Prev week</button>
+        <button class="btn" id="nextWeek">Next week &rarr;</button>
+        <span class="hint" id="wLabel" style="align-self:center"></span>
+      </div>
+      <div class="week" id="weekGrid"></div>
+    </div>
+    <div class="card">
+      <div class="h">Full scorecard</div>
+      <div class="hint" style="margin-bottom:8px">Golf scoring: Birdie = -1, Par = 0, Bogey = +1, Double bogey = +2. Lower is better. Click any hole to open it.</div>
+      <div style="overflow-x:auto"><table class="sc" id="scTable"></table></div>
+    </div>
+  </section>
+
+  <section id="tab-trophies" class="hidden">
+    <div class="sgrid" id="sgrid"></div>
+    <div class="cols">
+      <div class="card"><div class="h">Trophy cabinet</div><div class="badges" id="badges"></div></div>
+      <div class="card"><div class="h">XP by track</div><div id="trackbars"></div></div>
+    </div>
+  </section>
+
+  <section id="tab-library" class="hidden">
+    <div class="card" style="margin-bottom:16px">
+      <div class="h">Library</div>
+      <div class="hint">Every link here, and on every quest, opens the exact page or video to study. No search pages.</div>
+    </div>
+    <div class="lib" id="lib"></div>
+  </section>
+
+  <section id="tab-shop" class="hidden">
+    <div class="cols">
+      <div class="card">
+        <div class="h">Loot Shop</div>
+        <div class="hint" style="margin-bottom:10px">Every 5 XP earns 1 coin. Spend coins on real rewards so the grind pays you back.</div>
+        <div id="rewards"></div>
+        <div class="sect">Add your own reward</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="text" id="rName" placeholder="e.g. Weekend trip out of the city" style="flex:2;min-width:180px">
+          <input type="number" id="rCost" placeholder="Cost" style="flex:1;min-width:90px">
+          <button class="btn go" id="rAdd">Add</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="h">Wallet</div>
+        <div class="timer" id="wallet" style="font-size:36px"></div>
+        <div class="sect">Redeemed</div>
+        <div id="redeemed"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-body" class="hidden">
+    <div class="card" style="margin-bottom:16px">
+      <div class="h">Body: 93 kg to 82 kg, keeping the muscle</div>
+      <div class="hint">Recomposition plan. Strength training keeps (and builds) muscle, a moderate calorie deficit burns the fat, and daily steps do the quiet work. Log your morning weight in Today's Round; the trend line matters, single days don't.</div>
+    </div>
+    <div class="sgrid" id="bodyStats"></div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="h">Weight trend</div>
+      <div id="bodyChart"></div>
+      <div class="hint" style="margin-top:6px">Dots = daily weigh-ins. Blue line = 7-day average (the number to trust). Orange = the pace needed to hit 82 kg by 28 Feb (~0.7 kg/week). Honest expectation: 0.5-0.8 kg/week is healthy and sustainable, so landing at 84-86 kg by end of February and 82 kg in March is still a great result.</div>
+    </div>
+    <div class="cols">
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="h">Your week</div>
+          <table class="sc" style="text-align:left">
+            <tr><th>Mon</th><td style="text-align:left;cursor:default">Calisthenics class + 10 min core &amp; mobility</td></tr>
+            <tr><th>Tue</th><td style="text-align:left;cursor:default"><b>Lower (legs + glutes)</b>: squat or deadlift (alternating weeks), RDL / front squat, split squat or lunge, hip thrust, calf raise</td></tr>
+            <tr><th>Wed</th><td style="text-align:left;cursor:default">Calisthenics class + add-on</td></tr>
+            <tr><th>Thu</th><td style="text-align:left;cursor:default"><b>Upper (chest, back, shoulders, arms)</b>: bench, barbell row, overhead press, incline DB press, one-arm DB row, lateral + rear-delt raise, curl + triceps superset, hammer curl</td></tr>
+            <tr><th>Fri</th><td style="text-align:left;cursor:default">Calisthenics class (go lighter on legs)</td></tr>
+            <tr><th>Sat</th><td style="text-align:left;cursor:default">Badminton 60-90 min</td></tr>
+            <tr><th>Sun</th><td style="text-align:left;cursor:default">Recovery: zone-2 walk/cycle + stretching</td></tr>
+          </table>
+          <div class="hint" style="margin-top:8px">Why only 2 gym days works: your 3 calisthenics days already train push, pull and core with bodyweight. The gym days add what calisthenics can't: heavy legs, heavy hinges and progressive load, which is what tells your body to keep muscle in a deficit.</div>
+        </div>
+        <div class="card">
+          <div class="h">Training phases</div>
+          <div id="bodyPhases"></div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="h">Fuel (starting estimates)</div>
+          <ul class="hint" style="padding-left:18px;margin:0">
+            <li><b>Calories:</b> your maintenance is roughly 2,750-3,000 kcal with this much activity. Aim for <b>2,100-2,200 kcal/day</b> (about 0.7-0.8 kg/week).</li>
+            <li><b>Adjust weekly:</b> 7-day average dropped less than 0.4 kg two weeks in a row? Cut 150 kcal. Dropping over 1 kg/week? Add 150 kcal back.</li>
+            <li><b>Protein:</b> 150-170 g/day (about 2 g per kg of goal weight). Eggs, chicken, fish, paneer, Greek yogurt/hung curd, dal + soya, whey if convenient.</li>
+            <li><b>Plate rule:</b> half vegetables, a palm or two of protein, a fist of carbs. Most carbs around training.</li>
+            <li><b>Water</b> 3 L, <b>sleep</b> 7+ hours. Poor sleep makes the deficit eat muscle.</li>
+          </ul>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="h">Lifting rules</div>
+          <ul class="hint" style="padding-left:18px;margin:0">
+            <li><b>Progressive overload:</b> beat last session by 1 rep or 2.5 kg. Write every set down.</li>
+            <li><b>RPE 7-8:</b> finish most sets with 1-3 reps left. Never grind ugly reps.</li>
+            <li><b>Warm up:</b> 5 min easy cardio, then 2-3 lighter sets before your first lift.</li>
+            <li><b>Form first:</b> film your squat, deadlift and bench in week 1 and compare form against a trusted coach's demo.</li>
+            <li><b>Barbell and dumbbells only</b>, no machine needed. No rack: goblet or front-rack squat from the floor. No bench: dumbbell floor press.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="h">Measure monthly</div>
+          <div class="hint">Weight lies during recomposition, because muscle gained hides fat lost. On the 1st of each month also note waist (at navel), chest and arm measurements and a front/side photo in the same light. Waist going down while lifts go up = it's working.<br><br>Not medical advice: if you have any joint, heart or other health condition, check with a doctor before starting, and get a trainer to check your form on the big lifts.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-save" class="hidden">
+    <div class="cols">
+      <div class="card">
+        <div class="h">Backup</div>
+        <p class="hint">Progress is saved in this browser. Copy your save into a note every Sunday so a cleared browser never costs you a streak.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <button class="btn" id="bExport">Show save</button>
+          <button class="btn go" id="bImport">Load save from text</button>
+          <button class="btn red" id="bReset">Reset everything</button>
+        </div>
+        <textarea id="bText" style="min-height:220px" placeholder="Your save appears here. Paste a save here and click Load."></textarea>
+      </div>
+      <div class="card">
+        <div class="h">Player</div>
+        <label class="hint">Player name</label>
+        <input type="text" id="nameIn" maxlength="24" style="margin-bottom:12px">
+        <label class="hint"><input type="checkbox" id="soundIn"> Sound effects</label>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="h">Cloud sync (phone + laptop) and widget</div>
+      <div id="syncBox"></div>
+    </div>
+  </section>
+</main>
+<canvas id="fx"></canvas>
+<div class="toast" id="toast"></div>
+<div id="modalRoot"></div>
+
+<script>
+(function(){
+"use strict";
+
+// =====================================================================
+// CONFIG
+// =====================================================================
+var START = new Date(2026, 10, 12);
+var NDAYS = 109;
+var WAVE = "2027-01-04";
+var KEY = "escape-velocity-v1";
+var TRACKS = {
+  sd:     { name:"System Design",  color:"#2563eb" },
+  ai:     { name:"AI Engineering", color:"#7c3aed" },
+  cc:     { name:"CodeCrafters",   color:"#ea580c" },
+  lld:    { name:"LLD",            color:"#0891b2" },
+  career: { name:"Career",         color:"#059669" },
+  move:   { name:"Training",       color:"#e11d48" },
+  side:   { name:"Side quest",     color:"#db2777" }
+};
+var HI = "https://www.hellointerview.com/learn/system-design/";
+var HI_COURSE = "https://www.hellointerview.com/learn/courses/system-design";
+function PB(s){ return HI + "problem-breakdowns/" + s; }
+function DD(s){ return HI + "deep-dives/" + s; }
+function PT(s){ return HI + "patterns/" + s; }
+var KARPATHY = "https://karpathy.ai/zero-to-hero.html";
+var MINBPE = "https://github.com/karpathy/minbpe";
+var NANOCHAT = "https://github.com/karpathy/nanochat";
+var CS336 = "https://github.com/stanford-cs336";
+var FANOUT_INF = "https://fanout.sh/inference-eng";
+var VLLM = "https://docs.vllm.ai/";
+var LLAMACPP = "https://github.com/ggml-org/llama.cpp";
+var AGENTS = "https://www.anthropic.com/engineering/building-effective-agents";
+var CTXRET = "https://www.anthropic.com/news/contextual-retrieval";
+var HFCOURSE = "https://huggingface.co/learn/llm-course";
+var ACADEMY = "https://academy.claude.com/collections/build-with-claude";
+var CC = "https://app.codecrafters.io/catalog";
+
+function I(t, d, l, boss){ return { t:t, d:d || "", l:l || "", boss:!!boss }; }
+
+var PHASES = {
+  sd: [
+    { id:"fund", name:"Fundamentals", from:"2026-11-12", to:"2026-12-06" },
+    { id:"pat",  name:"Patterns", from:"2026-12-07", to:"2027-01-03" },
+    { id:"prob", name:"Problems + mocks", from:"2027-01-04", to:"2027-02-28" }
+  ],
+  ai: [
+    { id:"p1", name:"P1 LLM internals", from:"2026-11-12", to:"2026-12-06" },
+    { id:"p2", name:"P2 Inference", from:"2026-12-07", to:"2026-12-20" },
+    { id:"p3", name:"P3 LLM gateway", from:"2026-12-21", to:"2027-01-03" },
+    { id:"p4", name:"P4 Production RAG", from:"2027-01-04", to:"2027-01-24" },
+    { id:"p5", name:"P5 Agents", from:"2027-01-25", to:"2027-02-14" },
+    { id:"p6", name:"P6 Fine-tuning", from:"2027-02-15", to:"2027-02-28" }
+  ],
+  cc: [
+    { id:"redis", name:"Redis", from:"2026-11-12", to:"2026-12-27" },
+    { id:"kafka", name:"Kafka", from:"2026-12-28", to:"2027-02-28" }
+  ],
+  lld: [
+    { id:"pre", name:"Starts 7 Dec", from:"2026-11-12", to:"2026-12-06" },
+    { id:"found", name:"LLD foundations", from:"2026-12-07", to:"2026-12-27" },
+    { id:"code", name:"Machine coding", from:"2026-12-28", to:"2027-02-28" }
+  ],
+  career: [
+    { id:"found", name:"Foundations", from:"2026-11-12", to:"2026-11-30" },
+    { id:"pipe", name:"Pipeline", from:"2026-12-01", to:"2027-01-03" },
+    { id:"intv", name:"Interview mode", from:"2027-01-04", to:"2027-02-28" }
+  ]
+};
+
+var BOSS_META = {
+  "sd-fund":   { name:"The Blank Page Wraith", lore:"Feeds on concepts you only half understood.", seed:11 },
+  "sd-pat":    { name:"The Pattern Phantom", lore:"Shape-shifts into whichever pattern you skipped.", seed:12 },
+  "sd-prob":   { name:"The Final Interviewer", lore:"Asks 'and what happens at 10x traffic?' forever.", seed:13 },
+  "ai-p1":     { name:"The Transformer", lore:"Twelve heads of attention, all of them on you.", seed:21 },
+  "ai-p2":     { name:"Throughput Titan", lore:"Grows stronger with every token you can't batch.", seed:22 },
+  "ai-p3":     { name:"The Gatekeeper", lore:"Rate-limits anyone who comes unprepared.", seed:23 },
+  "ai-p4":     { name:"Hallucination Hydra", lore:"Cut off one made-up answer, two more grow back.", seed:24 },
+  "ai-p5":     { name:"The Infinite Loop", lore:"Never stops. Never checks its own work.", seed:25 },
+  "ai-p6":     { name:"The Overfit Ogre", lore:"Memorised the test set. Fails everything else.", seed:26 },
+  "cc-redis":  { name:"Redis Wyrm", lore:"Single-threaded, impossibly fast, hoards keys.", seed:31 },
+  "cc-kafka":  { name:"Kafka Leviathan", lore:"An endless log that remembers every offset.", seed:32 },
+  "cc-sqlite": { name:"B-Tree Behemoth", lore:"Every page you read makes it rebalance.", seed:33 },
+  "cc-http":   { name:"Socket Serpent", lore:"Keeps connections alive long after you've left.", seed:34 },
+  "lld-code":  { name:"The Machine Coder", lore:"Hands you a vague prompt and 90 minutes, then watches you name classes.", seed:41 }
+};
+
+// ---------- exact resource links ----------
+var HIS = "https://www.hellointerview.com/learn/system-design/";
+function core(s, n){ return ["Hello Interview: " + n, HIS + "core-concepts/" + s]; }
+function patt(s, n){ return ["Hello Interview pattern: " + n, HIS + "patterns/" + s]; }
+function dd(s, n){ return ["Hello Interview deep dive: " + n, HIS + "deep-dives/" + s]; }
+function pb(s, n){ return ["Hello Interview breakdown: " + n, HIS + "problem-breakdowns/" + s]; }
+function wild(s, n){ return ["Hello Interview in the wild: " + n, HIS + "in-the-wild/" + s]; }
+function fo(code, n){ return ["Fanout lesson: " + n, "https://fanout.sh/inference-eng/curriculum/" + code]; }
+function rcmd(c){ return ["Redis docs: " + c.toUpperCase(), "https://redis.io/docs/latest/commands/" + c + "/"]; }
+var X = {
+  hiDelivery:["Hello Interview: Delivery Framework", HIS + "in-a-hurry/delivery"],
+  hiIntro:["Hello Interview: Introduction", HIS + "in-a-hurry/introduction"],
+  hiCore:["Hello Interview: Core Concepts overview", HIS + "in-a-hurry/core-concepts"],
+  hiTech:["Hello Interview: Key Technologies overview", HIS + "in-a-hurry/key-technologies"],
+  hpbnTcp:["HPBN: Building Blocks of TCP", "https://hpbn.co/building-blocks-of-tcp/"],
+  hpbnTls:["HPBN: Transport Layer Security", "https://hpbn.co/transport-layer-security-tls/"],
+  hpbnH2:["HPBN: HTTP/2", "https://hpbn.co/http2/"],
+  samLB:["Sam Rose: Load Balancing (interactive)", "https://samwho.dev/load-balancing/"],
+  gapi:["Google API Design Guide", "https://cloud.google.com/apis/design"],
+  stripeIdem:["Stripe: Designing robust APIs with idempotency", "https://stripe.com/blog/idempotency"],
+  stripeRL:["Stripe: Scaling your API with rate limiters", "https://stripe.com/blog/rate-limiters"],
+  lukeAnatomy:["Use The Index, Luke: Anatomy of an index", "https://use-the-index-luke.com/sql/anatomy"],
+  pgIso:["Postgres docs: Transaction Isolation", "https://www.postgresql.org/docs/current/transaction-iso.html"],
+  pgHA:["Postgres docs: High Availability & Replication", "https://www.postgresql.org/docs/current/high-availability.html"],
+  jepsen:["Jepsen: Consistency models map", "https://jepsen.io/consistency"],
+  awsCache:["AWS: Caching best practices", "https://aws.amazon.com/caching/best-practices/"],
+  fbMemcache:["Paper: Scaling Memcache at Facebook", "https://www.usenix.org/conference/nsdi13/technical-sessions/presentation/nishtala"],
+  redisRepl:["Redis docs: Replication", "https://redis.io/docs/latest/operate/oss_and_stack/management/replication/"],
+  redisPersist:["Redis docs: Persistence", "https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/"],
+  redisResp:["Redis docs: RESP protocol spec", "https://redis.io/docs/latest/develop/reference/protocol-spec/"],
+  redisTypes:["Redis docs: Data types", "https://redis.io/docs/latest/develop/data-types/"],
+  rdb:["RDB file format reference", "https://rdb.fnordig.de/file_format.html"],
+  dynamo:["Paper: Amazon Dynamo (PDF)", "https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf"],
+  notion:["Notion: Sharding Postgres", "https://www.notion.com/blog/sharding-postgres-at-notion"],
+  insta:["Instagram: Sharding & IDs", "https://instagram-engineering.com/sharding-ids-at-instagram-1cf5a71e5a5c"],
+  klepp:["Kleppmann: Stop calling databases CP or AP", "https://martin.kleppmann.com/2015/05/11/please-stop-calling-databases-cp-or-ap.html"],
+  sqsDlq:["AWS docs: SQS dead-letter queues", "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html"],
+  kafkaDesign:["Kafka docs: Design", "https://kafka.apache.org/documentation/#design"],
+  kafkaProto:["Kafka protocol guide", "https://kafka.apache.org/protocol.html"],
+  cdn:["Cloudflare: What is a CDN", "https://www.cloudflare.com/learning/cdn/what-is-a-cdn/"],
+  magic:["Dropbox: Inside the Magic Pocket", "https://dropbox.tech/infrastructure/inside-the-magic-pocket"],
+  slack:["Slack: Real-time Messaging", "https://slack.engineering/real-time-messaging/"],
+  discord:["Discord: How we store trillions of messages", "https://discord.com/blog/how-discord-stores-trillions-of-messages"],
+  h3:["Uber: H3 spatial index", "https://www.uber.com/blog/h3/"],
+  latency:["Latency numbers (interactive)", "https://colin-scott.github.io/personal_website/research/interactive_latency.html"],
+  twitter:["Twitter: Timelines at Scale (talk)", "https://www.infoq.com/presentations/Twitter-Timeline-Scalability/"],
+  outbox:["microservices.io: Transactional outbox", "https://microservices.io/patterns/data/transactional-outbox.html"],
+  saga:["microservices.io: Saga pattern", "https://microservices.io/patterns/data/saga.html"],
+  airbnb:["Airbnb: Avoiding double payments", "https://medium.com/airbnb-engineering/avoiding-double-payments-in-a-distributed-payments-system-2981f6b070bb"],
+  figma:["Figma: How multiplayer works", "https://www.figma.com/blog/how-figmas-multiplayer-technology-works/"],
+  sreSlo:["Google SRE book: Service Level Objectives", "https://sre.google/sre-book/service-level-objectives/"],
+  sreMon:["Google SRE book: Monitoring Distributed Systems", "https://sre.google/sre-book/monitoring-distributed-systems/"],
+  sreCascade:["Google SRE book: Addressing Cascading Failures", "https://sre.google/sre-book/addressing-cascading-failures/"],
+  prom:["Prometheus: Overview", "https://prometheus.io/docs/introduction/overview/"],
+  oauth:["OAuth 2.0 Simplified", "https://www.oauth.com/"],
+  jwt:["JWT: Introduction", "https://jwt.io/introduction"],
+  raft:["Raft: visual explanation + paper", "https://raft.github.io/"],
+  pytorch:["PyTorch: Install locally", "https://pytorch.org/get-started/locally/"],
+  vMicro:["Video: Building micrograd (Karpathy, 2h25m)", "https://youtu.be/VMj-3S1tku0"],
+  rMicro:["Repo: karpathy/micrograd", "https://github.com/karpathy/micrograd"],
+  vMM1:["Video: makemore part 1, bigram model", "https://youtu.be/PaCmpygFfXo"],
+  rMM:["Repo: karpathy/makemore", "https://github.com/karpathy/makemore"],
+  vMM2:["Video: makemore part 2, MLP", "https://youtu.be/TCH_1BHY58I"],
+  vMM3:["Video: makemore part 3, activations & BatchNorm", "https://youtu.be/P6sfmUTpUmc"],
+  vGPT:["Video: Let's build GPT from scratch", "https://www.youtube.com/watch?v=kCc8FmEb1nY"],
+  rNanoGPT:["Repo: karpathy/nanoGPT", "https://github.com/karpathy/nanoGPT"],
+  vTok:["Video: Let's build the GPT Tokenizer", "https://youtu.be/zduSFxRajkE"],
+  rMinbpe:["Repo: karpathy/minbpe", "https://github.com/karpathy/minbpe"],
+  rNanochat:["Repo: karpathy/nanochat", "https://github.com/karpathy/nanochat"],
+  illus:["Jay Alammar: The Illustrated Transformer", "https://jalammar.github.io/illustrated-transformer/"],
+  attn:["Paper: Attention Is All You Need", "https://arxiv.org/abs/1706.03762"],
+  hfGen:["Hugging Face: How to generate text (sampling)", "https://huggingface.co/blog/how-to-generate"],
+  vllmBlog:["vLLM: PagedAttention launch post", "https://blog.vllm.ai/2023/06/20/vllm.html"],
+  llamaServer:["llama.cpp: HTTP server", "https://github.com/ggml-org/llama.cpp/tree/master/tools/server"],
+  k6:["k6 docs", "https://grafana.com/docs/k6/latest/"],
+  openaiChat:["OpenAI API reference: Chat Completions", "https://platform.openai.com/docs/api-reference/chat"],
+  bunHttp:["Bun docs: HTTP server", "https://bun.sh/docs/api/http"],
+  mdnSse:["MDN: Using server-sent events", "https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events"],
+  backoff:["AWS: Exponential backoff and jitter", "https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/"],
+  gptcache:["Repo: GPTCache (semantic caching)", "https://github.com/zilliztech/GPTCache"],
+  otelJs:["OpenTelemetry: JavaScript docs", "https://opentelemetry.io/docs/languages/js/"],
+  otelGenai:["OpenTelemetry: GenAI semantic conventions", "https://opentelemetry.io/docs/specs/semconv/gen-ai/"],
+  hamel:["Hamel Husain: Your AI Product Needs Evals", "https://hamel.dev/blog/posts/evals/"],
+  ragWhat:["Pinecone: What is RAG", "https://www.pinecone.io/learn/retrieval-augmented-generation/"],
+  chunk:["Pinecone: Chunking strategies", "https://www.pinecone.io/learn/chunking-strategies/"],
+  rerank:["Pinecone: Rerankers and two-stage retrieval", "https://www.pinecone.io/learn/series/rag/rerankers/"],
+  ragas:["Pinecone: Evaluating RAG with RAGAS", "https://www.pinecone.io/learn/series/rag/ragas/"],
+  ctx:["Anthropic: Contextual Retrieval", "https://www.anthropic.com/news/contextual-retrieval"],
+  rrf:["Paper: Reciprocal Rank Fusion (PDF)", "https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf"],
+  qrewrite:["Paper: Query Rewriting for RAG", "https://arxiv.org/abs/2305.14283"],
+  crag:["Paper: Corrective RAG (CRAG)", "https://arxiv.org/abs/2401.15884"],
+  selfrag:["Paper: Self-RAG", "https://arxiv.org/abs/2310.11511"],
+  owaspPI:["OWASP: LLM Prompt Injection Prevention", "https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html"],
+  trifecta:["Simon Willison: The lethal trifecta", "https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/"],
+  agents:["Anthropic: Building Effective Agents", "https://www.anthropic.com/engineering/building-effective-agents"],
+  tools:["Anthropic: Writing effective tools for agents", "https://www.anthropic.com/research/writing-tools-for-agents"],
+  ctxEng:["Anthropic: Effective context engineering for agents", "https://www.anthropic.com/research/effective-context-engineering-for-ai-agents"],
+  agentEvals:["Anthropic: Demystifying evals for AI agents", "https://www.anthropic.com/research/demystifying-evals-for-ai-agents"],
+  toolEvalCb:["Claude cookbook: Tool evaluation", "https://platform.claude.com/cookbook/tool-evaluation-tool-evaluation"],
+  toolUse:["Claude docs: Tool use overview", "https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/overview"],
+  mcpIntro:["MCP: What is the Model Context Protocol", "https://modelcontextprotocol.io/docs/getting-started/intro"],
+  mcpServer:["MCP: Build a server", "https://modelcontextprotocol.io/docs/develop/build-server"],
+  slackCtx:["Slack: Managing context in long-run agents", "https://slack.engineering/managing-context-in-long-run-agentic-applications/"],
+  peftLora:["Hugging Face PEFT: LoRA guide", "https://huggingface.co/docs/peft/main/en/conceptual_guides/lora"],
+  loraPaper:["Paper: LoRA", "https://arxiv.org/abs/2106.09685"],
+  qloraPaper:["Paper: QLoRA", "https://arxiv.org/abs/2305.14314"],
+  trlSft:["Hugging Face TRL: SFT Trainer", "https://huggingface.co/docs/trl/sft_trainer"],
+  pg2:["Model card: Llama Prompt Guard 2 (22M)", "https://huggingface.co/meta-llama/Llama-Prompt-Guard-2-22M"],
+  pg2onnx:["Prompt Guard 2 22M ONNX (for transformers.js)", "https://huggingface.co/gravitee-io/Llama-Prompt-Guard-2-22M-onnx"],
+  precRec:["Google ML Crash Course: Precision & recall", "https://developers.google.com/machine-learning/crash-course/classification/accuracy-precision-recall"],
+  ccRedis:["CodeCrafters: Build your own Redis", "https://app.codecrafters.io/courses/redis/overview"],
+  ccKafka:["CodeCrafters: Build your own Kafka", "https://app.codecrafters.io/courses/kafka/overview"],
+  ccSqlite:["CodeCrafters: Build your own SQLite", "https://app.codecrafters.io/courses/sqlite/overview"],
+  ccHttp:["CodeCrafters: Build your own HTTP server", "https://app.codecrafters.io/courses/http-server/overview"],
+  sqliteFmt:["SQLite: Database file format", "https://www.sqlite.org/fileformat.html"],
+  sqliteQP:["SQLite: Query planner (how indexes work)", "https://www.sqlite.org/queryplanner.html"],
+  rfc9112:["RFC 9112: HTTP/1.1", "https://www.rfc-editor.org/rfc/rfc9112.html"],
+  mdnHttp:["MDN: Overview of HTTP", "https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview"],
+  mdnComp:["MDN: HTTP compression", "https://developer.mozilla.org/en-US/docs/Web/HTTP/Compression"]
+};
+
+// ---------- quest content ----------
+var SD_LEARN = "Learn it, explain it out loud from a blank page, then write a half-page note in your own words. Done when you could teach it.";
+var SD_PROB = "45 min out loud: requirements, estimates, API, data model, high-level design, deep dives, then what fails and how you'd monitor and deploy it. Compare with the reference and note your 3 biggest gaps.";
+var Q = {
+  "sd-fund-wk": [
+    I("The delivery framework: how to run a 45-min design interview", SD_LEARN, [X.hiDelivery, X.hiIntro]),
+    I("Networking: TCP vs UDP, HTTP/1.1 vs 2 vs 3, DNS, TLS", SD_LEARN, [core("networking-essentials","Networking Essentials"), X.hpbnTcp, X.hpbnTls, X.hpbnH2]),
+    I("Load balancers & proxies: L4 vs L7, algorithms, health checks", SD_LEARN, [X.samLB, core("networking-essentials","Networking Essentials (load balancing section)")]),
+    I("API design: REST, gRPC, GraphQL, pagination, idempotency keys", SD_LEARN, [core("api-design","API Design"), X.stripeIdem, X.gapi]),
+    I("Data modeling: SQL vs NoSQL, normalization, design from access patterns", SD_LEARN, [core("data-modeling","Data Modeling")]),
+    I("Database indexing: B-tree vs LSM, composite and covering indexes", SD_LEARN, [core("db-indexing","Database Indexing"), X.lukeAnatomy]),
+    I("Transactions & isolation levels: ACID, MVCC, read anomalies", SD_LEARN, [dd("postgres","PostgreSQL"), X.pgIso, X.jepsen]),
+    I("Caching: cache-aside, write-through/back, eviction, invalidation, stampedes", SD_LEARN, [core("caching","Caching"), X.awsCache, X.fbMemcache]),
+    I("Replication: leader-follower, multi-leader, leaderless quorums, replication lag", SD_LEARN, [X.pgHA, X.redisRepl, X.dynamo]),
+    I("Sharding: hash vs range, hot keys, resharding", SD_LEARN, [core("sharding","Sharding"), X.notion]),
+    I("Consistent hashing & virtual nodes", SD_LEARN, [core("consistent-hashing","Consistent Hashing"), X.dynamo]),
+    I("CAP, PACELC & consistency models (strong, eventual, read-your-writes)", SD_LEARN, [core("cap-theorem","CAP Theorem"), X.klepp, X.jepsen]),
+    I("Queues & streams: SQS vs Kafka, delivery guarantees, DLQs, backpressure", SD_LEARN, [dd("kafka","Kafka"), X.kafkaDesign, X.sqsDlq]),
+    I("Blob storage & CDNs: S3, presigned URLs, multipart upload, edge caching", SD_LEARN, [patt("large-blobs","Handling Large Blobs"), X.cdn, X.magic]),
+    I("Real-time: polling, long polling, SSE, WebSockets, pub/sub fan-out", SD_LEARN, [patt("realtime-updates","Real-time Updates"), X.slack]),
+    I("Search & geo: inverted index, Elasticsearch basics, geohash/quadtree", SD_LEARN, [dd("elasticsearch","Elasticsearch"), dd("proximity-search","Proximity Search"), X.h3]),
+    I("Numbers to know & back-of-envelope estimation", SD_LEARN, [core("numbers-to-know","Numbers to Know"), X.latency])
+  ],
+  "sd-fund-sat": [
+    I("Out loud: Design a URL shortener (Bitly)", SD_PROB, [pb("bitly","Bitly")]),
+    I("Out loud: Design a notification system", SD_PROB, [pb("notification-system","Notification System")]),
+    I("Out loud: Design online chess", SD_PROB, [pb("online-chess","Online Chess")]),
+    I("Out loud: Design a price tracker (camelcamelcamel)", SD_PROB, [pb("camelcamelcamel","Price Tracking Service")])
+  ],
+  "sd-fund-sun": [
+    I("Spaced recall: rebuild this week's topics from a blank page", "No notes open. Write every concept from this week, then check what you missed. Re-learn only the gaps.", [X.hiDelivery, core("networking-essentials","Networking Essentials")]),
+    I("Spaced recall + flashcards for weeks 1-2", "Turn every gap into a one-line flashcard. Review the deck in 20 minutes.", [core("api-design","API Design"), core("data-modeling","Data Modeling"), core("db-indexing","Database Indexing")]),
+    I("Spaced recall: draw replication, sharding and caching on one diagram", "One system, all three ideas, explained out loud in 10 minutes.", [core("caching","Caching"), core("sharding","Sharding"), core("consistent-hashing","Consistent Hashing")]),
+    I("BOSS: Blank-page test on all 17 fundamentals", "60 minutes, no notes. Explain each fundamental in 2-3 minutes out loud. Anything you stumble on goes back into next week.", [X.hiCore], true)
+  ],
+  "sd-pat-wk": [
+    I("Pattern: Scaling reads (replicas, cache layers, CDN)", SD_LEARN, [patt("scaling-reads","Scaling Reads"), X.twitter]),
+    I("Problem: Design a news aggregator (scaling reads applied)", SD_PROB, [pb("google-news","News Aggregator")]),
+    I("Pattern: Scaling writes (sharding, batching, write-behind)", SD_LEARN, [patt("scaling-writes","Scaling Writes"), X.discord]),
+    I("Problem: Design an ad click aggregator", SD_PROB, [pb("ad-click-aggregator","Ad Click Aggregator"), dd("flink","Flink")]),
+    I("Rate limiting algorithms + Design a distributed rate limiter", "Token bucket, leaky bucket, sliding window. Then design it for many servers. " + SD_PROB, [pb("distributed-rate-limiter","Rate Limiter"), X.stripeRL]),
+    I("Pattern: Real-time updates (WebSockets at scale, pub/sub, presence)", SD_LEARN, [patt("realtime-updates","Real-time Updates"), X.slack]),
+    I("Problem: Design WhatsApp", SD_PROB, [pb("whatsapp","WhatsApp"), wild("discord-messages-scylladb","Discord message storage")]),
+    I("Pattern: Dealing with contention (locks, optimistic concurrency, reservations)", SD_LEARN, [patt("dealing-with-contention","Dealing with Contention"), wild("shopify-inventory-reservations","Shopify inventory reservations")]),
+    I("Problem: Design Ticketmaster", SD_PROB, [pb("ticketmaster","Ticketmaster")]),
+    I("Idempotency, outbox pattern, sagas, and why exactly-once is mostly a myth", SD_LEARN, [X.stripeIdem, X.outbox, X.saga, dd("change-data-capture","Change Data Capture")]),
+    I("Pattern: Multi-step processes (workflows, orchestration vs choreography)", SD_LEARN, [patt("multi-step-processes","Multi-step Processes"), dd("temporal","Temporal")]),
+    I("Problem: Design a payment system", SD_PROB, [pb("payment-system","Payment System"), X.airbnb]),
+    I("Pattern: Handling large blobs (presigned uploads, chunking, resumable)", SD_LEARN, [patt("large-blobs","Handling Large Blobs"), X.magic]),
+    I("Problem: Design Dropbox", SD_PROB, [pb("dropbox","Dropbox")]),
+    I("Pattern: Long-running tasks (job queues, workers, retries, scheduling)", SD_LEARN, [patt("long-running-tasks","Managing Long Running Tasks"), wild("slack-job-queue","Slack job queue")]),
+    I("Problem: Design a web crawler", SD_PROB, [pb("web-crawler","Web Crawler")]),
+    I("Pattern: Proximity-based services (geohash, quadtrees, PostGIS)", SD_LEARN, [dd("proximity-search","Proximity Search"), X.h3]),
+    I("Problem: Design Uber", SD_PROB, [pb("uber","Uber")]),
+    I("Observability & SLOs: metrics, logs, traces, alerting, error budgets", SD_LEARN, [X.sreSlo, X.sreMon, X.prom]),
+    I("Security for design rounds: authN/Z, OAuth/OIDC, JWT vs sessions, multi-tenancy", SD_LEARN, [X.oauth, X.jwt])
+  ],
+  "sd-pat-sat": [
+    I("Out loud: Design Facebook Live Comments", SD_PROB, [pb("fb-live-comments","FB Live Comments")]),
+    I("Out loud: Design an online auction", SD_PROB, [pb("online-auction","Online Auction")]),
+    I("Out loud: Design YouTube", SD_PROB, [pb("youtube","YouTube")]),
+    I("Out loud: Design Yelp", SD_PROB, [pb("yelp","Yelp")])
+  ],
+  "sd-pat-sun": [
+    I("Deep dive: Redis + Postgres internals", "Read both deep dives. Write 5 'when I'd pick it / when I wouldn't' bullets for each.", [dd("redis","Redis"), dd("postgres","PostgreSQL")]),
+    I("Deep dive: Kafka", "Partitions, consumer groups, retention, ordering guarantees. Connect it to what you're building in CodeCrafters.", [dd("kafka","Kafka"), X.kafkaDesign]),
+    I("Deep dive: DynamoDB & Cassandra", "Partition keys, LSM trees, tunable consistency. When NoSQL wins.", [dd("dynamodb","DynamoDB"), dd("cassandra","Cassandra"), X.dynamo]),
+    I("BOSS: Cold mock - Design Uber in 45 min, recorded", "No notes, timer on, record yourself. Watch it back and list 5 improvements.", [pb("uber","Uber (compare after)")], true)
+  ],
+  "sd-prob-q": [
+    I("Out loud (cold redo): Ticketmaster", SD_PROB, [pb("ticketmaster","Ticketmaster")]),
+    I("Out loud (cold redo): Uber", SD_PROB, [pb("uber","Uber")]),
+    I("Out loud (cold redo): WhatsApp", SD_PROB, [pb("whatsapp","WhatsApp")]),
+    I("Out loud (cold redo): Dropbox", SD_PROB, [pb("dropbox","Dropbox")]),
+    I("Out loud: Instagram", SD_PROB, [pb("instagram","Instagram"), X.insta]),
+    I("Out loud: Facebook News Feed", SD_PROB, [pb("fb-news-feed","FB News Feed"), X.twitter]),
+    I("Out loud: Tinder", SD_PROB, [pb("tinder","Tinder")]),
+    I("Out loud: Strava", SD_PROB, [pb("strava","Strava")]),
+    I("Out loud: Robinhood", SD_PROB, [pb("robinhood","Robinhood")]),
+    I("Out loud: Distributed job scheduler", SD_PROB, [pb("job-scheduler","Job Scheduler")]),
+    I("Out loud: Metrics monitoring system", SD_PROB, [pb("metrics-monitoring","Metrics Monitoring"), dd("time-series-databases","Time Series Databases")]),
+    I("Out loud: Distributed cache", SD_PROB, [pb("distributed-cache","Distributed Cache"), X.fbMemcache]),
+    I("Out loud: Facebook Post Search", SD_PROB, [pb("fb-post-search","FB Post Search")]),
+    I("Out loud: Top-K trending (YouTube Top K)", SD_PROB, [pb("top-k","YouTube Top K"), dd("data-structures-for-big-data","Data Structures for Big Data")]),
+    I("Out loud: Local delivery (Gopuff)", SD_PROB, [pb("gopuff","Local Delivery Service")]),
+    I("Out loud: Google Docs", SD_PROB, [pb("google-docs","Google Docs"), wild("figma-multiplayer","Figma multiplayer")]),
+    I("Out loud: LeetCode (online judge)", SD_PROB, [pb("leetcode","LeetCode")]),
+    I("Out loud (cold redo): Payment system", SD_PROB, [pb("payment-system","Payment System")]),
+    I("Out loud (cold redo): Web crawler", SD_PROB, [pb("web-crawler","Web Crawler")]),
+    I("Out loud (cold redo): Ad click aggregator", SD_PROB, [pb("ad-click-aggregator","Ad Click Aggregator")]),
+    I("Out loud (cold redo): YouTube", SD_PROB, [pb("youtube","YouTube")]),
+    I("Out loud (cold redo): News aggregator", SD_PROB, [pb("google-news","News Aggregator")]),
+    I("Out loud (cold redo): Notification system", SD_PROB, [pb("notification-system","Notification System")]),
+    I("Speed run: URL shortener in 30 minutes", "Same structure, half the time. Interviews reward a crisp first 15 minutes.", [pb("bitly","Bitly")])
+  ],
+  "sd-prob-aisd": [
+    I("AI system design: LLM gateway for 50 teams", "Routing, fallback, per-team budgets, caching, observability. Use what you built in P3. " + SD_PROB, [dd("api-gateway","API Gateway"), pb("distributed-rate-limiter","Rate Limiter")]),
+    I("AI system design: RAG over 10M documents with permissions", "Ingestion, indexing, hybrid retrieval, ACLs, freshness, evals. " + SD_PROB, [dd("vector-databases","Vector Databases"), X.ctx]),
+    I("AI system design: Agent platform (tools, memory, sandboxing)", "Loop, tool registry, memory, guardrails, cost limits, replay. " + SD_PROB, [X.agents, X.tools]),
+    I("AI system design: Inference service for 10k concurrent users", "GPU capacity math, batching, autoscaling, TTFT SLOs. Use your P2 numbers. " + SD_PROB, [X.vllmBlog, fo("07-03","Continuous Batching")]),
+    I("AI system design: Eval & monitoring pipeline for LLM apps", "Offline evals, online sampling, LLM-as-judge, regression gates in CI. " + SD_PROB, [X.hamel, X.agentEvals]),
+    I("AI system design: ChatGPT-style chat app", "Streaming, conversation history, memory, rate limits, abuse. " + SD_PROB, [pb("chatgpt","ChatGPT")]),
+    I("AI system design: Semantic search for e-commerce", "Embeddings + keyword, reranking, personalization, latency budget. " + SD_PROB, [dd("vector-databases","Vector Databases"), dd("elasticsearch","Elasticsearch"), X.rerank]),
+    I("AI system design: Content moderation pipeline with LLMs", "Cheap classifiers first, LLM for hard cases, human review, appeals. " + SD_PROB, [X.pg2, X.owaspPI])
+  ],
+  "sd-prob-fri": [
+    I("Weak-spot review: redo this week's worst design from memory", "Pick the design you felt shakiest on. Redo only the parts you got wrong."),
+    I("Weak-spot review + rewrite one design doc cleanly", "A clean 1-page version you could paste into an interview follow-up.", [X.hiDelivery]),
+    I("Weak-spot review: estimation drills", "10 quick back-of-envelope estimates (QPS, storage, bandwidth) in 30 minutes.", [core("numbers-to-know","Numbers to Know"), X.latency]),
+    I("Weak-spot review: failure modes", "For 3 past designs, list what breaks first at 10x traffic and how you'd detect it.", [X.sreCascade]),
+    I("Weak-spot review: redo this week's worst design from memory", "Only the parts you got wrong."),
+    I("Weak-spot review: trade-off flashcards", "SQL vs NoSQL, push vs pull, sync vs async, cache vs no cache. One card each.", [X.hiCore, X.hiTech]),
+    I("Weak-spot review: redo this week's worst design from memory", "Only the parts you got wrong."),
+    I("Weak-spot review: your 3 best designs, polished", "These become your go-to examples in interviews.")
+  ],
+  "sd-prob-sat": [
+    I("Mock interview #1 - system design (peer or paid)", "Recorded. After: write 3 things to fix."),
+    I("Mock interview #2 - AI system design", "Recorded. After: write 3 things to fix."),
+    I("Mock interview #3 - system design", "Recorded. After: write 3 things to fix."),
+    I("Mock interview #4 - system design", "Recorded. After: write 3 things to fix."),
+    I("Mock interview #5 - AI system design", "Recorded. After: write 3 things to fix."),
+    I("Mock interview #6 - system design", "Recorded. After: write 3 things to fix."),
+    I("Mock interview #7 - system design", "Recorded. After: write 3 things to fix."),
+    I("BOSS: Final mock loop - 2 back-to-back design rounds", "Simulate a real onsite. If this goes well, you're ready.", "", true)
+  ],
+  "sd-prob-sun": [
+    I("Deep dive refresh: Postgres", "Indexes, MVCC, replication, when it stops scaling.", [dd("postgres","PostgreSQL"), X.pgIso]),
+    I("Deep dive refresh: DynamoDB", "", [dd("dynamodb","DynamoDB")]),
+    I("Deep dive refresh: Cassandra", "", [dd("cassandra","Cassandra"), X.discord]),
+    I("Deep dive refresh: Kafka", "", [dd("kafka","Kafka")]),
+    I("Deep dive refresh: Redis", "", [dd("redis","Redis")]),
+    I("Deep dive refresh: Elasticsearch", "", [dd("elasticsearch","Elasticsearch")]),
+    I("Deep dive: ZooKeeper / consensus (Raft in plain words)", "", [dd("zookeeper","ZooKeeper"), X.raft]),
+    I("Deep dive: API gateways & CDNs", "", [dd("api-gateway","API Gateway"), X.cdn])
+  ],
+  "ai-p1": [
+    I("Setup Python + PyTorch; start the micrograd video", "Watch the first hour of the micrograd video. Type the code yourself.", [X.vMicro, X.pytorch, X.rMicro]),
+    I("BUILD: micrograd from scratch", "Finish the video. Write your own Value class and backprop without looking, then train a tiny neural net.", [X.vMicro, X.rMicro]),
+    I("makemore part 1: bigram language model", "Counting, sampling, the loss function. Type it yourself.", [X.vMM1, X.rMM]),
+    I("makemore part 2: MLP (first half)", "Embeddings, hidden layer, training loop.", [X.vMM2]),
+    I("makemore part 2: finish + experiments", "Change embedding size and learning rate; log what happens to loss.", [X.vMM2]),
+    I("BUILD: makemore part 3 (activations, BatchNorm)", "Then write a short note: why training goes unstable and what fixes it.", [X.vMM3]),
+    I("Let's build GPT: data, baseline, the self-attention trick", "First third of the video.", [X.vGPT, X.rNanoGPT]),
+    I("Let's build GPT: self-attention and multi-head attention", "Be able to explain Q, K, V on a whiteboard.", [X.vGPT, X.illus, X.attn]),
+    I("Let's build GPT: feed-forward, residuals, LayerNorm, scaling up", "Last third of the video.", [X.vGPT]),
+    I("BUILD: Project 1 - train your own tiny GPT", "Pick a corpus you care about. Train it, log loss curves, sample text.", [X.vGPT, X.rNanoGPT]),
+    I("Tokenizer video: how BPE works", "Why tokens explain cost, context limits and weird failures.", [X.vTok, X.rMinbpe]),
+    I("Implement BPE yourself: train, encode, decode", "Compare your tokenizer's output with minbpe's.", [X.rMinbpe, X.vTok]),
+    I("Add sampling to your GPT: temperature, top-k, top-p", "Generate with each setting and save examples side by side.", [X.hfGen]),
+    I("BOSS: Add a KV cache to your GPT + write-up", "Implement it, measure the speedup, publish 'What building a GPT taught me'. Optional: skim nanochat's code.", [fo("03-04","Build a KV Cache"), fo("03-01","Why generation recomputes work"), X.rNanochat], true)
+  ],
+  "ai-p2": [
+    I("Inference basics: TTFT, TPOT, throughput, goodput", "", [fo("in-01","What is inference engineering"), fo("04-01","TTFT, TPOT, ITL, E2E & Throughput")]),
+    I("KV cache memory math; why decoding is memory-bound", "Calculate KV cache size for a 7B model at 8k context by hand.", [fo("00-01","Math for memory, throughput & speedups"), fo("12-07","Compute-bound vs memory-bound")]),
+    I("Continuous batching & PagedAttention", "Read how vLLM does it. Draw it.", [fo("07-03","Continuous Batching"), fo("08-03","PagedAttention"), X.vllmBlog]),
+    I("BUILD: Serve a small open model, stream tokens over HTTP", "llama.cpp on your Mac or vLLM on a rented GPU.", [fo("01-03","Generate & stream your first tokens"), fo("01-05","Serve the model over HTTP"), X.llamaServer]),
+    I("Quantization: FP16, FP8, INT8, 4-bit, AWQ/GPTQ trade-offs", "", [fo("11-02","BF16, FP8, INT8 & 4-bit inference"), fo("11-03","AWQ, GPTQ & SmoothQuant")]),
+    I("Write a load test (k6 or Locust) measuring TTFT and TPOT", "Concurrency 1, 4, 16, 64.", [X.k6, fo("04-05","P50, P95, P99 & variance")]),
+    I("Benchmark: quantized vs full precision; chart the results", "", [fo("05-05","Find saturation, SLO failure & OOM boundaries")]),
+    I("BOSS: Project 2 report - capacity planning", "Answer: how many GPUs for 1,000 concurrent users at your latency target? Publish it.", [fo("04-06","Goodput, SLOs & failure rates")], true)
+  ],
+  "ai-p3": [
+    I("Spec the LLM gateway (you write it)", "API, routing rules, budget model, data model, what you'll measure.", [dd("api-gateway","API Gateway"), X.openaiChat]),
+    I("Build an OpenAI-compatible proxy in Bun with streaming", "", [X.bunHttp, X.mdnSse, X.openaiChat]),
+    I("Multi-provider routing, fallback, retries with backoff, timeouts", "Include your own model server from P2 as a provider.", [X.backoff]),
+    I("BUILD: Per-team rate limiting (token bucket in Redis) + token budgets", "", [pb("distributed-rate-limiter","Rate Limiter"), X.stripeRL]),
+    I("Semantic cache: embed prompts, similarity threshold, measure hit rate", "", [X.gptcache, dd("vector-databases","Vector Databases")]),
+    I("Cost & latency tracking per request + OpenTelemetry traces", "", [X.otelJs, X.otelGenai]),
+    I("Plug Warden in as a pre-request guard; load-test the gateway", "", [X.k6]),
+    I("BOSS: Ship Project 3", "README with architecture diagram, numbers, 2-minute demo video.", "", true)
+  ],
+  "ai-p4": [
+    I("Pick a document corpus; write 50 test questions with answers + source pages", "Include unanswerable questions, multi-document answers and outdated info.", [X.hamel]),
+    I("Eval harness: retrieval recall@k, answer correctness, faithfulness", "LLM-as-judge plus your own spot checks.", [X.ragas, X.hamel]),
+    I("Naive RAG baseline: chunk, embed, vector DB, top-k", "Record the baseline numbers. Expect them to be mediocre.", [X.ragWhat]),
+    I("BUILD: Smarter chunking (by headings, overlap) + metadata; measure", "", [X.chunk]),
+    I("Hybrid search: BM25 + vectors merged with Reciprocal Rank Fusion; measure", "", [X.ctx, X.rrf]),
+    I("Add a reranker; measure recall@5 and the latency cost", "", [X.rerank]),
+    I("Contextual retrieval: prefix each chunk with its document context; measure", "", [X.ctx]),
+    I("BUILD: Query side - rewriting, splitting multi-part questions, routing", "Measure on your hardest questions.", [X.qrewrite]),
+    I("The loop: draft, verify every claim against sources, re-search or abstain", "This is the step that separates engineers from tutorials.", [X.crag, X.selfrag]),
+    I("Citations per claim + 'I don't know' on unanswerable questions", "Measure how often it correctly refuses.", [X.selfrag]),
+    I("Production: permission-aware retrieval, injection scan of documents, incremental re-indexing", "", [dd("vector-databases","Vector Databases"), X.owaspPI]),
+    I("BOSS: Ship Project 4 with the improvement table", "Every step, what it improved, what it cost. Publish the write-up.", [X.hamel], true)
+  ],
+  "ai-p5": [
+    I("Read 'Building Effective Agents'; spec your agent", "Workflow or agent? Write down why.", [X.agents]),
+    I("Tool use + intro to MCP", "", [X.toolUse, X.mcpIntro]),
+    I("Build the core loop: plan, act, observe; stop conditions; step & cost budget", "", [X.agents, X.tools]),
+    I("BUILD: 3-4 tools as MCP servers, wired into the loop", "", [X.mcpServer, X.tools]),
+    I("Error handling: tool failures, retries, timeouts, idempotent tools", "", [X.tools, X.backoff]),
+    I("Memory: plug in your Memory Layer; context compaction", "", [X.ctxEng, X.slackCtx]),
+    I("Write a task eval set: 20 tasks with success criteria", "", [X.agentEvals]),
+    I("BUILD: Eval runner - success rate, steps, cost, failure categories", "", [X.agentEvals, X.toolEvalCb]),
+    I("Guardrails: Warden on tool outputs, tool-call policy, human approval for risky actions", "", [X.trifecta, X.owaspPI]),
+    I("Tracing & replay of runs; debug the 3 worst failures", "", [X.otelGenai]),
+    I("Improve and re-run evals; compare before vs after", "", [X.hamel]),
+    I("BOSS: Ship Project 5", "Eval score before/after, demo video, write-up.", "", true)
+  ],
+  "ai-p6": [
+    I("When to fine-tune vs prompt vs RAG; LoRA/QLoRA concepts", "", [X.peftLora, X.loraPaper, X.qloraPaper]),
+    I("Build the dataset from your Warden attack corpus: train/val/test, no leakage", "", [X.hamel]),
+    I("Baselines on the test set: big-model prompting and Prompt Guard", "", [X.pg2]),
+    I("BUILD: LoRA fine-tune a small open model; track loss", "Colab or a rented GPU.", [X.peftLora, X.trlSft]),
+    I("Evaluate: accuracy, false positives, latency, cost", "", [X.precRec]),
+    I("Error analysis + one improvement iteration", "", [X.hamel]),
+    I("Plug the fine-tuned classifier into Warden as a stage", "", [X.pg2onnx]),
+    I("BOSS: Project 6 write-up + update resume and portfolio", "3-way comparison table. Your AI story is complete.", "", true)
+  ],
+  "cc-redis": [
+    I("Set up CodeCrafters (TypeScript or Go); first stage: bind to a port", "Redis is free until 31 Dec 2026, so do it now.", [X.ccRedis]),
+    I("Respond to PING, multiple PINGs, concurrent clients", "This is the event loop. Understand it, don't just pass tests.", [X.ccRedis, X.redisResp]),
+    I("ECHO + a proper RESP parser", "", [X.redisResp, X.ccRedis]),
+    I("SET / GET + key expiry", "", [rcmd("set"), rcmd("get"), X.ccRedis]),
+    I("Write-up: real Redis' event loop vs yours; refactor", "", [X.redisResp]),
+    I("RDB persistence: read config, read keys from an RDB file", "", [X.rdb, X.redisPersist, X.ccRedis]),
+    I("RDB persistence: values and expiry from file", "", [X.rdb, X.ccRedis]),
+    I("Replication: the handshake", "Ties straight into system design replication.", [X.redisRepl, rcmd("psync"), X.ccRedis]),
+    I("Replication: propagate commands to replicas", "", [X.redisRepl, X.ccRedis]),
+    I("Replication: offsets and WAIT", "", [rcmd("wait"), X.redisRepl, X.ccRedis]),
+    I("Replication wrap-up + write-up: how leader-follower replication really works", "", [X.redisRepl]),
+    I("Lists: push, range + blocking pops", "", [rcmd("rpush"), rcmd("lrange"), rcmd("blpop"), X.ccRedis]),
+    I("Streams: add, range + blocking reads", "", [rcmd("xadd"), rcmd("xrange"), rcmd("xread"), X.ccRedis]),
+    I("Transactions: MULTI / EXEC / DISCARD", "", [rcmd("multi"), rcmd("exec"), X.ccRedis]),
+    I("Pub/Sub", "", [rcmd("subscribe"), rcmd("publish"), X.ccRedis]),
+    I("Sorted sets + remaining stages", "", [rcmd("zadd"), rcmd("zrange"), rcmd("geoadd"), X.ccRedis]),
+    I("BOSS: Redis complete + README", "Architecture notes, what you'd do differently, what real Redis does better.", [X.ccRedis, X.redisTypes], true)
+  ],
+  "cc-kafka": [
+    I("Kafka concepts first: log, partitions, offsets, consumer groups; start the challenge", "", [X.kafkaDesign, X.ccKafka]),
+    I("Kafka: wire protocol + request parsing", "", [X.kafkaProto, X.ccKafka]),
+    I("Kafka: next stages (API versions)", "", [X.kafkaProto, X.ccKafka]),
+    I("Kafka: multiple and concurrent requests", "", [X.ccKafka]),
+    I("Kafka: describing topics and partitions", "", [X.kafkaProto, X.ccKafka]),
+    I("Kafka: reading cluster metadata from disk", "", [X.ccKafka]),
+    I("Kafka: multiple partitions and topics", "", [X.ccKafka]),
+    I("Kafka: fetch API basics", "", [X.kafkaProto, X.ccKafka]),
+    I("Kafka: fetching messages from the on-disk log", "", [X.kafkaDesign, X.ccKafka]),
+    I("Kafka: multiple messages", "", [X.ccKafka]),
+    I("Kafka: remaining stages", "", [X.ccKafka]),
+    I("Kafka: remaining stages", "", [X.ccKafka]),
+    I("Write-up: how real Kafka gets its throughput", "Sequential I/O, batching, zero-copy, page cache.", [X.kafkaDesign]),
+    I("Compare Kafka vs SQS vs Redis Streams", "When you'd pick each one in a design interview.", [dd("kafka","Kafka"), X.sqsDlq, rcmd("xadd")]),
+    I("Refactor your Redis code with what LLD taught you", "Interfaces, smaller classes, unit tests. Same behaviour, cleaner code.", [X.ccRedis, ["AlgoMaster: SOLID principles with code", "https://blog.algomaster.io/p/solid-principles-explained-with-code"]]),
+    I("Refactor your Kafka code the same way", "", [X.ccKafka]),
+    I("Final README pass on both builds", "Architecture diagram, what you learned, what real Redis/Kafka do better.", [X.redisRepl, X.kafkaDesign]),
+    I("BOSS: Kafka complete + README", "", [X.ccKafka], true)
+  ],
+  "cc-sqlite": [
+    I("Read the SQLite file format (header, pages, B-tree pages); first stage", "", [X.sqliteFmt, X.ccSqlite]),
+    I("SQLite: count tables, read table names", "", [X.sqliteFmt, X.ccSqlite]),
+    I("SQLite: count rows, read a column", "", [X.ccSqlite]),
+    I("SQLite: WHERE clauses", "", [X.ccSqlite]),
+    I("SQLite: use an index to speed up a query", "", [X.sqliteQP, X.ccSqlite]),
+    I("BOSS: SQLite done + write-up: B-trees vs LSM trees", "", [X.lukeAnatomy, core("db-indexing","Database Indexing")], true)
+  ],
+  "cc-http": [
+    I("HTTP server: bind and respond with 200", "", [X.ccHttp, X.mdnHttp]),
+    I("HTTP server: URL paths and routing", "", [X.rfc9112, X.ccHttp]),
+    I("HTTP server: headers and user-agent", "", [X.rfc9112, X.ccHttp]),
+    I("HTTP server: concurrent connections", "", [X.ccHttp]),
+    I("HTTP server: serve files, handle POST", "", [X.ccHttp]),
+    I("BOSS: HTTP server done + write-up: keep-alive and compression", "", [X.mdnComp, X.rfc9112], true)
+  ],
+  "career-found": [
+    I("Write your 'why' and your target", "Roles, cities (remote, NCR, abroad), salary floor, notice period. One page."),
+    I("Target list: 25 companies (remote-first or outside Bengaluru)", "Use your Job Search Targets note as a start."),
+    I("Resume v2: headline + summary for 'Backend + AI engineer'", ""),
+    I("Weekly review: plan next week in this tracker", "Check the catch-up queue. Decide what to cut if you're behind."),
+    I("Resume: rewrite experience bullets with impact numbers", "Action, what you built, the measurable result."),
+    I("LinkedIn: headline, About, Featured section", ""),
+    I("GitHub profile README + pin Warden and the Memory Layer", ""),
+    I("Warden README: architecture, eval numbers, demo GIF", ""),
+    I("Build-in-public post #1: what you're starting and why", "Short and honest. Recruiters notice consistency."),
+    I("Freelance profile on Upwork / Contra: title, overview, portfolio", ""),
+    I("Weekly review: plan next week", ""),
+    I("Write your freelance offer: 3 packages", "LLM gateway, grounded document chatbot, AI guardrails."),
+    I("Memory Layer README polish", ""),
+    I("List 30 people to reach out to (EMs, founders at targets)", ""),
+    I("Write 3 referral message templates", ""),
+    I("Build-in-public post #2: what micrograd taught you", ""),
+    I("Write 5 STAR stories", "Ownership, conflict, failure, production incident, ambiguity."),
+    I("Weekly review: plan next week", ""),
+    I("Write 5 more STAR stories + a 90-second 'tell me about yourself'", "Say it out loud until it sounds natural.")
+  ]
+};
+
+var HLL = "https://www.hellointerview.com/learn/low-level-design/";
+var AMP = "https://algomaster.io/learn/lld/";
+var AMC = "https://algomaster.io/learn/concurrency-interview/";
+var LRP = "https://github.com/ashishps1/awesome-low-level-design/blob/main/problems/";
+function hl(s, n){ return ["Hello Interview LLD: " + n, HLL + s]; }
+function am(s, n){ return ["AlgoMaster: " + n, AMP + s]; }
+function amc(s, n){ return ["AlgoMaster concurrency: " + n, AMC + s]; }
+function lrp(s, n){ return ["Problem statement: " + n, LRP + s + ".md"]; }
+var LLD_TIMED = "Machine-coding round, 90 min timed, in TypeScript: requirements (5 min) -> entities + relationships (10 min) -> interfaces + class diagram (15 min) -> code (50 min) -> a few tests + walkthrough (10 min). Then compare with the reference and note what you'd change.";
+var LLD_LEARN = "Read, then build a tiny TypeScript example of each idea yourself (no copy-paste). Done when you can explain when to use it and when not to.";
+Q["lld-found"] = [
+  I("OOP in TypeScript + SOLID: refactor a messy class", LLD_LEARN, [hl("in-a-hurry/oop-concepts","OOP Concepts"), hl("in-a-hurry/design-principles","Design Principles"), ["AlgoMaster: SOLID principles with code", "https://blog.algomaster.io/p/solid-principles-explained-with-code"]]),
+  I("Creational patterns: Factory, Builder, Singleton (and when not to)", LLD_LEARN, [am("factory-method","Factory Method"), am("builder","Builder"), am("singleton","Singleton"), hl("in-a-hurry/patterns","Design Patterns"), ["RefactoringGuru: patterns in TypeScript (repo)", "https://github.com/RefactoringGuru/design-patterns-typescript"]]),
+  I("Structural patterns: Adapter, Decorator, Facade, Proxy", LLD_LEARN, [am("adapter","Adapter"), am("decorator","Decorator"), am("facade","Facade"), am("proxy","Proxy"), ["RefactoringGuru: patterns in TypeScript (repo)", "https://github.com/RefactoringGuru/design-patterns-typescript"]]),
+  I("Behavioral patterns: Strategy, Observer, State, Command, Chain of Responsibility", LLD_LEARN, [am("strategy","Strategy"), am("observer","Observer"), am("state","State"), am("command","Command"), am("chain-of-responsibility","Chain of Responsibility"), ["RefactoringGuru: patterns in TypeScript (repo)", "https://github.com/RefactoringGuru/design-patterns-typescript"]]),
+  I("Concurrency in LLD: race conditions, locks, idempotency in async TypeScript", LLD_LEARN, [hl("concurrency/intro","Concurrency intro"), hl("concurrency/correctness","Correctness"), hl("concurrency/coordination","Coordination"), hl("concurrency/scarcity","Scarcity")]),
+  I("How to run a 90-min machine-coding round + warm-up: Connect Four (untimed)", "Learn the delivery framework, then build Connect Four slowly and cleanly. Speed comes later.", [hl("in-a-hurry/delivery","Delivery Framework"), hl("problem-breakdowns/connect-four","Connect Four"), ["AlgoMaster: How to answer an LLD interview problem", "https://blog.algomaster.io/p/how-to-answer-a-lld-interview-problem"]])
+];
+Q["lld-code"] = [
+  I("Machine coding: Parking lot", LLD_TIMED, [hl("problem-breakdowns/parking-lot","Parking Lot"), lrp("parking-lot","Parking Lot")]),
+  I("Machine coding: LRU cache with TTL", LLD_TIMED + " Reuses what you built in Redis.", [lrp("lru-cache","LRU Cache"), amc("design-thread-safe-cache-with-ttl","Thread-safe cache with TTL")]),
+  I("Machine coding: Rate limiter (token bucket + sliding window)", LLD_TIMED + " FLAGSHIP MODULE: this becomes your AI platform's rate limiter.", [hl("problem-breakdowns/rate-limiter","Rate Limiter")]),
+  I("Machine coding: Logging framework", LLD_TIMED, [hl("problem-breakdowns/logging-service","Logging Service"), lrp("logging-framework","Logging Framework")]),
+  I("Machine coding: Splitwise", LLD_TIMED, [lrp("splitwise","Splitwise")]),
+  I("Machine coding: In-memory pub/sub queue", LLD_TIMED + " Reuses what you're learning in Kafka.", [lrp("pub-sub-system","Pub Sub System")]),
+  I("Machine coding: Elevator system", LLD_TIMED, [hl("problem-breakdowns/elevator","Elevator"), lrp("elevator-system","Elevator System")]),
+  I("Machine coding: BookMyShow (seat locking under concurrency)", LLD_TIMED, [hl("problem-breakdowns/bookmyshow","Movie Ticket Booking"), lrp("movie-ticket-booking-system","Movie Ticket Booking")]),
+  I("Machine coding: Amazon Locker", LLD_TIMED, [hl("problem-breakdowns/amazon-locker","Amazon Locker")]),
+  I("Speed run: Snake & ladder in 60 minutes", "Same steps, 60 minutes. Interviews reward a working core early.", [lrp("snake-and-ladder","Snake and Ladder")]),
+  I("Machine coding: Job scheduler with retries", LLD_TIMED + " FLAGSHIP MODULE: becomes your platform's background-job runner.", [amc("producer-consumer-pattern","Producer-Consumer"), amc("thread-pool-pattern","Thread Pool"), lrp("task-management-system","Task Management System")]),
+  I("Machine coding: Key-value store with transactions", LLD_TIMED + " Reuses what you learned building Redis.", [hl("concurrency/correctness","Correctness"), rcmd("multi"), rcmd("watch")]),
+  I("Machine coding: Notification service (Observer + Strategy)", LLD_TIMED, [am("observer","Observer"), am("strategy","Strategy")]),
+  I("Machine coding: Inventory management", LLD_TIMED, [hl("problem-breakdowns/inventory-management","Inventory Management")]),
+  I("Machine coding: LLM provider router (Strategy + Adapter + circuit breaker)", LLD_TIMED + " FLAGSHIP MODULE: routes requests across model providers with fallback.", [am("strategy","Strategy"), am("adapter","Adapter"), ["AWS: Exponential backoff and jitter", "https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/"]]),
+  I("Machine coding: Agent tool registry / plugin system", LLD_TIMED + " FLAGSHIP MODULE: how your agent discovers and calls tools.", [am("command","Command"), am("factory-method","Factory Method"), ["Anthropic: Writing effective tools for agents", "https://www.anthropic.com/research/writing-tools-for-agents"]]),
+  I("BOSS: Mock LLD interview - File System, 90 min, recorded", "Treat it like the real round. Watch the recording and list 5 fixes.", [hl("problem-breakdowns/file-system","File System (compare after)"), hl("in-a-hurry/delivery","Delivery Framework")], true),
+  I("Flagship design review: class diagrams for your 4 flagship modules", "Rate limiter, job runner, provider router, tool registry. One clean diagram each; this goes into the flagship README.", [am("class-diagram","Class Diagram")])
+];
+
+var CAREER_ROT = {
+  pipe: {
+    1: I("Apply to 3 roles (practice companies)", "Remote or outside Bengaluru. Log each one."),
+    2: I("Send 5 outreach / referral messages", ""),
+    3: I("Send 2 freelance pitches or proposals", "Lead with a specific result from your projects."),
+    4: I("Apply to 3 roles", ""),
+    5: I("Build-in-public post about this week's project", ""),
+    6: I("AI-assisted coding practice: 60 min in an unfamiliar repo", "Fix a bug or add a feature with Claude Code/Cursor, talking out loud. Read before you prompt; verify everything."),
+    0: I("Weekly review: plan next week, follow up on applications", "")
+  },
+  intv: {
+    1: I("Apply to 3 top-target roles, with referrals where possible", ""),
+    2: I("Send 5 outreach messages + follow-ups", ""),
+    3: I("Freelance: 2 pitches, or client work", ""),
+    4: I("Apply to 3 roles + prep for any scheduled interviews", "Research each company's interview format before the loop."),
+    5: I("Build-in-public post", ""),
+    6: I("AI-assisted coding practice: 60 min in an unfamiliar repo", "Record it. Review how you prompted and what you verified."),
+    0: I("Weekly review + log what every interview asked", "Your interview log is next week's study plan.")
+  }
+};
+var SIDE_POOL = [
+  ["Read one engineering blog post from the Library; write 3 takeaways", 20],
+  ["Rubber duck: explain today's main topic out loud in 5 minutes, no notes", 15],
+  ["Watch one video on today's topic (use the Watch link on a quest)", 15],
+  ["Make 5 flashcards from today's quests", 15],
+  ["Message or reply to 2 people in your network", 15],
+  ["Sleep before midnight", 10],
+  ["No doomscrolling until your main quests are done", 10],
+  ["Skim one paper or long-form piece from the Library", 15],
+  ["Polish one README or write-up for 20 minutes", 15],
+  ["Post a 3-line build-in-public update", 20],
+  ["Optional DSA warm-up: one medium problem in 30 minutes", 20],
+  ["Walk 15 minutes after lunch, phone in your pocket", 10]
+];
+var WEEKLY_SIDE = ["Weekly side quest: write a 200-word recap of the week and save or post it", 40];
+
+// ---------- library ----------
+function LI(x, note){ return [x[0], x[1], note]; }
+var LIBRARY = [
+  ["Hello Interview (free pages)", [
+    LI(X.hiIntro, "Start here"),
+    LI(X.hiDelivery, "How to run the 45 minutes"),
+    LI(X.hiCore, "All core concepts in one place"),
+    LI(X.hiTech, "Postgres, Redis, Kafka, Cassandra, and more"),
+    LI(["Common Patterns overview", HIS + "in-a-hurry/patterns"], "The 7 patterns"),
+    LI(["Problem breakdowns index", HIS + "in-a-hurry/problem-breakdowns"], "30+ worked designs"),
+    LI(["System design in the wild", HIS + "in-the-wild"], "Real company architectures")
+  ]],
+  ["Karpathy: build it from scratch (videos)", [
+    LI(X.vMicro, "Backprop by hand"),
+    LI(X.vMM1, "Language modeling basics"),
+    LI(X.vMM2, "MLP, training basics"),
+    LI(X.vMM3, "Why training breaks, BatchNorm"),
+    LI(["Video: makemore part 4, backprop ninja", "https://youtu.be/q8SA3rM6ckI"], "Optional, deep"),
+    LI(["Video: makemore part 5, WaveNet", "https://youtu.be/t3YJ5hKiMQ0"], "Optional"),
+    LI(X.vGPT, "Transformer from scratch"),
+    LI(X.vTok, "Tokenizers and their weirdness"),
+    LI(X.rNanochat, "Full mini ChatGPT pipeline")
+  ]],
+  ["Books (free online)", [
+    LI(["Google SRE book", "https://sre.google/sre-book/table-of-contents/"], "SLOs, monitoring, postmortems"),
+    LI(["High Performance Browser Networking", "https://hpbn.co/"], "Networking done right"),
+    LI(["Use The Index, Luke", "https://use-the-index-luke.com/"], "How indexes really work"),
+    LI(["Designing Data-Intensive Applications (paid)", "https://dataintensive.net/"], "The bible, if you buy one book")
+  ]],
+  ["Papers", [
+    LI(X.dynamo, "Consistent hashing, quorums"),
+    LI(X.fbMemcache, "Caching at absurd scale"),
+    LI(X.raft, "Consensus you can understand"),
+    LI(X.attn, "The transformer paper"),
+    LI(X.loraPaper, "Fine-tuning cheaply"),
+    LI(X.crag, "RAG that checks itself")
+  ]],
+  ["Engineering blogs (real systems)", [
+    LI(X.discord, "Cassandra to ScyllaDB, hot partitions"),
+    LI(X.slack, "WebSockets + consistent hashing"),
+    LI(X.notion, "A real sharding migration"),
+    LI(X.h3, "Geospatial indexing"),
+    LI(X.stripeIdem, "Retries without double charges"),
+    LI(X.stripeRL, "Rate limiting in production"),
+    LI(X.figma, "Real-time collaboration"),
+    LI(X.magic, "Exabyte blob storage"),
+    LI(X.insta, "ID generation"),
+    LI(X.airbnb, "Payments correctness"),
+    LI(X.twitter, "Fan-out on write vs read")
+  ]],
+  ["Visual & interactive", [
+    LI(X.samLB, "Animated load balancing"),
+    LI(X.jepsen, "The map of consistency"),
+    LI(X.latency, "Estimation cheat sheet"),
+    LI(X.illus, "Transformers, visually")
+  ]],
+  ["YouTube channels", [
+    LI(["Hussein Nasser", "https://www.youtube.com/@hnasr"], "Backend internals"),
+    LI(["Gaurav Sen", "https://www.youtube.com/@gkcs"], "System design, beginner friendly"),
+    LI(["ByteByteGo", "https://www.youtube.com/@ByteByteGo"], "Short visual explainers"),
+    LI(["Arpit Bhayani (website)", "https://arpitbhayani.me/"], "Practical deep dives")
+  ]],
+  ["AI engineering", [
+    LI(["Fanout: Inference Engineering course", "https://fanout.sh/inference-eng"], "KV cache, batching, serving"),
+    LI(X.vllmBlog, "Why PagedAttention matters"),
+    LI(X.agents, "When and how to build agents"),
+    LI(X.tools, "Designing tools agents can use"),
+    LI(X.agentEvals, "Evaluating agents"),
+    LI(X.ctx, "Better RAG retrieval"),
+    LI(X.hamel, "Evals, the core skill"),
+    LI(X.mcpIntro, "Model Context Protocol"),
+    LI(X.peftLora, "LoRA hands-on")
+  ]],
+  ["Build it yourself", [
+    LI(X.ccRedis, "Free until 31 Dec 2026"),
+    LI(X.ccKafka, "Logs, partitions, offsets"),
+    LI(X.ccSqlite, "Optional, after the plan"),
+    LI(X.ccHttp, "Optional, after the plan")
+  ]],
+  ["Low-level design (machine coding)", [
+    LI(["Hello Interview: LLD in a Hurry", "https://www.hellointerview.com/learn/low-level-design/in-a-hurry/introduction"], "Framework, principles, patterns"),
+    LI(["Hello Interview: LLD Delivery Framework", "https://www.hellointerview.com/learn/low-level-design/in-a-hurry/delivery"], "How to run the round"),
+    LI(["awesome-low-level-design (problem list)", "https://github.com/ashishps1/awesome-low-level-design"], "50+ problems, easy to hard"),
+    LI(["AlgoMaster: Design patterns", "https://algomaster.io/learn/lld/strategy"], "One page per pattern")
+  ]],
+  ["GitHub: system design", [
+    LI(["donnemartin/system-design-primer", "https://github.com/donnemartin/system-design-primer"], "The classic. Read the trade-offs sections"),
+    LI(["ByteByteGoHq/system-design-101", "https://github.com/ByteByteGoHq/system-design-101"], "Visual one-pagers, great for revision"),
+    LI(["ashishps1/awesome-system-design-resources", "https://github.com/ashishps1/awesome-system-design-resources"], "Concepts + problem list, links out"),
+    LI(["karanpratapsingh/system-design", "https://github.com/karanpratapsingh/system-design"], "Full course in one README"),
+    LI(["binhnguyennus/awesome-scalability", "https://github.com/binhnguyennus/awesome-scalability"], "Real company engineering posts by topic")
+  ]],
+  ["GitHub: low-level design", [
+    LI(["ashishps1/awesome-low-level-design", "https://github.com/ashishps1/awesome-low-level-design"], "Problems + reference code (has TypeScript)"),
+    LI(["RefactoringGuru/design-patterns-typescript", "https://github.com/RefactoringGuru/design-patterns-typescript"], "Every pattern, in TypeScript"),
+    LI(["torokmark/design_patterns_in_typescript", "https://github.com/torokmark/design_patterns_in_typescript"], "Smaller, simpler TS pattern examples"),
+    LI(["prasadgujar/low-level-design-primer", "https://github.com/prasadgujar/low-level-design-primer"], "Curated LLD question list"),
+    LI(["goldbergyoni/nodebestpractices", "https://github.com/goldbergyoni/nodebestpractices"], "Production Node/TS habits")
+  ]],
+  ["GitHub: AI from scratch", [
+    LI(["karpathy/nn-zero-to-hero", "https://github.com/karpathy/nn-zero-to-hero"], "Notebooks for the video series"),
+    LI(["karpathy/nanoGPT", "https://github.com/karpathy/nanoGPT"], "Smallest readable GPT training code"),
+    LI(["karpathy/minbpe", "https://github.com/karpathy/minbpe"], "Tokenizer from scratch"),
+    LI(["rasbt/LLMs-from-scratch", "https://github.com/rasbt/LLMs-from-scratch"], "Build, pretrain and fine-tune a GPT step by step"),
+    LI(["mlabonne/llm-course", "https://github.com/mlabonne/llm-course"], "Roadmap + notebooks, incl. fine-tuning")
+  ]],
+  ["GitHub: production AI (read the code)", [
+    LI(["anthropics/claude-cookbooks", "https://github.com/anthropics/claude-cookbooks"], "Tool use, RAG, agents, evals recipes"),
+    LI(["BerriAI/litellm", "https://github.com/BerriAI/litellm"], "LLM gateway: routing, fallbacks, budgets (flagship reference)"),
+    LI(["langfuse/langfuse", "https://github.com/langfuse/langfuse"], "Tracing + evals platform (TypeScript)"),
+    LI(["vercel/ai", "https://github.com/vercel/ai"], "TypeScript AI SDK: streaming, tools, providers"),
+    LI(["mastra-ai/mastra", "https://github.com/mastra-ai/mastra"], "TypeScript agent framework: workflows, memory, evals"),
+    LI(["openai/openai-agents-js", "https://github.com/openai/openai-agents-js"], "Agents SDK in TS: handoffs, guardrails"),
+    LI(["modelcontextprotocol/servers", "https://github.com/modelcontextprotocol/servers"], "Reference MCP servers"),
+    LI(["NirDiamant/RAG_Techniques", "https://github.com/NirDiamant/RAG_Techniques"], "30+ RAG techniques with notebooks"),
+    LI(["NirDiamant/GenAI_Agents", "https://github.com/NirDiamant/GenAI_Agents"], "Agent patterns, worked examples"),
+    LI(["chiphuyen/aie-book", "https://github.com/chiphuyen/aie-book"], "Resources for AI Engineering (the book)")
+  ]],
+  ["GitHub: build your own X", [
+    LI(["codecrafters-io/build-your-own-x", "https://github.com/codecrafters-io/build-your-own-x"], "Guides for rebuilding Redis, Git, DBs, etc.")
+  ]]
+];
+
+// =====================================================================
+// SCHEDULE
+// =====================================================================
+function pad(n){ return (n < 10 ? "0" : "") + n; }
+function iso(d){ return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()); }
+function addDays(d, n){ var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() + n); return x; }
+function parseIso(s){ var p = s.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+var DOWS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+var MONS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function nice(s){ var d = parseIso(s); return DOWS[d.getDay()] + ", " + d.getDate() + " " + MONS[d.getMonth()]; }
+function short(s){ var d = parseIso(s); return d.getDate() + " " + MONS[d.getMonth()]; }
+function phaseOf(track, ds){ var ps = PHASES[track]; for (var i=0;i<ps.length;i++){ if (ds >= ps[i].from && ds <= ps[i].to) return ps[i]; } return ps[ps.length-1]; }
+function daysBetween(a, b){ return Math.round((parseIso(b) - parseIso(a)) / 86400000); }
+
+// =====================================================================
+// TRAINING PROGRAM (recomposition: lose fat, keep and build muscle)
+// =====================================================================
+var BODY = { start: 93, goal: 82, heightCm: 183 };
+var TPH = [
+  { id:"found",    name:"Foundation",  from:"2026-11-12", to:"2026-12-06", note:"Learn the lifts, moderate weights, 2-3 reps left in the tank on every set." },
+  { id:"build",    name:"Build",       from:"2026-12-07", to:"2026-12-27", note:"Add a set and add load whenever you hit the top of the rep range." },
+  { id:"deload1",  name:"Deload",      from:"2026-12-28", to:"2027-01-03", note:"Half the sets, ~60% weight. Let joints and nervous system recover." },
+  { id:"strength", name:"Strength",    from:"2027-01-04", to:"2027-02-07", note:"Heavier 5x5 on the big lifts; this is what keeps muscle while you diet." },
+  { id:"deload2",  name:"Deload",      from:"2027-02-08", to:"2027-02-14", note:"Back off again before the final push." },
+  { id:"peak",     name:"Peak & test", from:"2027-02-15", to:"2027-02-28", note:"One hard week, then test a heavy 5-rep set and re-measure." }
+];
+function tphase(ds){ for (var i=0;i<TPH.length;i++) if (ds >= TPH[i].from && ds <= TPH[i].to) return TPH[i]; return TPH[TPH.length-1]; }
+var DAILY_BASICS = "Every day: 8-10k steps · ~160 g protein · 7+ hours sleep · weigh in after waking (log it below).";
+function gymMods(ph, ds){
+  var test = ph.id === "peak" && ds >= "2027-02-22";
+  if (ph.id === "found")    return { m:"3 x 5, find your working weight (stop 2-3 reps short)", dl:"3 x 5, find your working weight", acc:1, fin:true, tag:"" };
+  if (ph.id === "build")    return { m:"4 x 5", dl:"3 x 5", acc:1, fin:true, tag:"" };
+  if (ph.id === "strength") return { m:"5 x 3 heavy (1-2 reps in reserve)", dl:"4 x 3 heavy", acc:1, fin:true, tag:"" };
+  if (test)                 return { m:"TEST: warm up and work up to your heaviest clean triple", dl:"TEST: work up to your heaviest clean triple", acc:0, fin:false, tag:" · TEST WEEK" };
+  if (ph.id === "peak")     return { m:"5 x 3 heavy, last hard week", dl:"4 x 3 heavy", acc:1, fin:true, tag:"" };
+  return { m:"2 x 5 at ~60% of working weight", dl:"2 x 5 at ~60%", acc:2, fin:false, tag:"" };
+}
+function accSets(g, reps){ return g.acc === 2 ? "2 x " + reps + ", light" : (g.acc === 0 ? "2 x " + reps + ", easy" : "3 x " + reps); }
+var GYM_FOOT = "Hit every rep on a main lift? Add 2.5 kg next time (5 kg on squat/deadlift). Rest 2-3 min on lifts 1-2, ~90 s on the rest.";
+function moveFor(ds, dow){
+  var ph = tphase(ds), deload = ph.id.indexOf("deload") === 0, g = gymMods(ph, ds);
+  if (dow === 2) {
+    var squatWeek = Math.floor(daysBetween("2026-11-16", ds) / 7) % 2 === 0;
+    var body = squatWeek ?
+      "1. Barbell back squat - " + g.m + "\n" +
+      "2. Barbell Romanian deadlift - " + accSets(g, "8") + "\n" +
+      "3. Dumbbell Bulgarian split squat - " + accSets(g, "8 per leg") + "\n" +
+      "4. Barbell hip thrust - " + accSets(g, "10") + "\n" +
+      "5. Standing dumbbell calf raise - " + accSets(g, "12-15") + "\n" +
+      (g.fin ? "Optional finisher: heavy dumbbell farmer carry, 3 x 40 m.\n" : "")
+    :
+      "1. Barbell conventional deadlift - " + g.dl + "\n" +
+      "2. Barbell front squat (or heavy goblet squat) - " + accSets(g, "6-8") + "\n" +
+      "3. Dumbbell walking lunge - " + accSets(g, "10 per leg") + "\n" +
+      "4. Barbell hip thrust - " + accSets(g, "10") + "\n" +
+      "5. Standing dumbbell calf raise - " + accSets(g, "12-15") + "\n" +
+      (g.fin ? "Optional finisher: heavy dumbbell farmer carry, 3 x 40 m.\n" : "");
+    return { item: I("Lower body: legs + glutes (" + (squatWeek ? "squat week" : "deadlift week") + ") · " + ph.name + g.tag,
+      body + GYM_FOOT + "\n" + DAILY_BASICS), xp: 25, mins: 70 };
+  }
+  if (dow === 4) {
+    return { item: I("Upper body: chest, back, shoulders, arms · " + ph.name + g.tag,
+      "CHEST  1. Barbell bench press - " + g.m + "\n" +
+      "BACK   2. Barbell bent-over row - " + (g.acc === 1 ? "4 x 6" : accSets(g, "6")) + "\n" +
+      "SHOULDERS  3. Standing barbell overhead press - " + accSets(g, "6-8") + "\n" +
+      "CHEST  4. Incline dumbbell press - " + accSets(g, "8-10") + "\n" +
+      "BACK   5. One-arm dumbbell row - " + accSets(g, "10 per arm") + "\n" +
+      "SHOULDERS  6. Superset: dumbbell lateral raise + dumbbell rear-delt fly - " + accSets(g, "12-15 each") + "\n" +
+      "ARMS   7. Superset: barbell (or EZ) curl + dumbbell overhead triceps extension - " + accSets(g, "10-12 each") + "\n" +
+      "ARMS   8. Dumbbell hammer curl - " + (g.acc === 1 ? "2 x 12" : "1 x 12, light") + "\n" +
+      "Pull-ups stay on your calisthenics days.\n" + GYM_FOOT.replace(" (5 kg on squat/deadlift)", "") + " Rest 60 s on the supersets.\n" + DAILY_BASICS), xp: 25, mins: 75 };
+  }
+  if (dow === 1 || dow === 3 || dow === 5) {
+    return { item: I("Calisthenics session" + (deload ? " (easy week: ~70% effort)" : ""),
+      "Your regular calisthenics class.\nAdd-on (10 min): 3 x max hanging knee raises, 3 x 30 s hollow hold, 5 min hip + shoulder mobility.\n" +
+      (dow === 5 ? "Friday: keep legs light so Saturday's badminton feels good.\n" : "") + DAILY_BASICS), xp: 20, mins: 70 };
+  }
+  if (dow === 6) {
+    return { item: I("Badminton 60-90 min (or swim, hike, football)", "Play for fun and sweat. This is your best fat-loss cardio of the week.\n" + DAILY_BASICS), xp: 15, mins: 90 };
+  }
+  return { item: I("Recovery: 45 min zone-2 walk or easy cycle + 15 min stretching", "Zone 2 = you can still talk in full sentences. Stretch hips, hamstrings, chest and lats.\nAlso: meal prep protein for the week.\n" + DAILY_BASICS), xp: 15, mins: 60 };
+}
+
+var DATES = [], PLAN = {}, SIDES = {}, ALL = [], SIDEALL = [], BYID = {};
+(function build(){
+  var ptr = {};
+  function take(key){ ptr[key] = ptr[key] || 0; var arr = Q[key] || []; return arr[ptr[key]++] || null; }
+  for (var n=0; n<NDAYS; n++){
+    var d = addDays(START, n), ds = iso(d), dow = d.getDay(), tasks = [];
+    var push = function(track, item, xp, mins){
+      if (!item) item = I("Buffer: clear your catch-up queue or polish a write-up", "Nothing new today on this track. Close gaps instead.");
+      var t = { id: ds + "-" + track, date: ds, track: track, t: item.t, d: item.d, l: item.l, boss: item.boss, xp: item.boss ? xp*3 : xp, mins: mins };
+      t.phase = track === "move" ? "" : phaseOf(track, ds).id;
+      tasks.push(t); ALL.push(t); BYID[t.id] = t;
+    };
+    var sp = phaseOf("sd", ds).id, sdItem, sdXP = 30, sdMin = 90;
+    if (sp === "prob") {
+      if (dow===1||dow===2||dow===4) sdItem = take("sd-prob-q");
+      else if (dow===3) sdItem = take("sd-prob-aisd");
+      else if (dow===5) sdItem = take("sd-prob-fri");
+      else if (dow===6) { sdItem = take("sd-prob-sat"); sdXP = 50; sdMin = 75; }
+      else { sdItem = take("sd-prob-sun"); sdXP = 30; sdMin = 60; }
+    } else {
+      if (dow===6) { sdItem = take("sd-" + sp + "-sat"); sdXP = 50; sdMin = 60; }
+      else if (dow===0) { sdItem = take("sd-" + sp + "-sun"); sdXP = ds >= "2026-12-07" ? 30 : 40; sdMin = ds >= "2026-12-07" ? 60 : 120; }
+      else sdItem = take("sd-" + sp + "-wk");
+    }
+    push("sd", sdItem, sdXP, sdMin);
+    if (dow===1||dow===3||dow===5||dow===6) push("ai", take("ai-" + phaseOf("ai", ds).id), dow===6 ? 60 : 30, dow===6 ? 180 : 90);
+    var lldOn = ds >= "2026-12-07";
+    if (dow===2||dow===6||(dow===4 && !lldOn)) push("cc", take("cc-" + phaseOf("cc", ds).id), dow===6 ? 40 : 30, dow===6 ? 120 : 90);
+    if (lldOn && (dow===4||dow===0)) push("lld", take("lld-" + phaseOf("lld", ds).id), dow===0 ? 40 : 30, 90);
+    var cp = phaseOf("career", ds).id;
+    push("career", cp === "found" ? take("career-found") : CAREER_ROT[cp][dow], (dow===6||dow===0) ? 20 : 15, (cp!=="found" && dow===6) ? 60 : 25);
+    var mv = moveFor(ds, dow); push("move", mv.item, mv.xp, mv.mins);
+    var sides = [], L = SIDE_POOL.length;
+    var mk = function(k, arr){ var s = { id: ds + "-side-" + k, date: ds, track:"side", t: arr[0], xp: arr[1], side:true }; sides.push(s); SIDEALL.push(s); BYID[s.id] = s; };
+    mk(0, SIDE_POOL[(n*2) % L]); mk(1, SIDE_POOL[(n*2+1) % L]);
+    if (dow === 0) mk("w", WEEKLY_SIDE);
+    var lg = { id: ds + "-side-log", date: ds, track:"side", t:"Log your round (hours + what you learned)", xp: 15, side:true, auto:true };
+    sides.push(lg); SIDEALL.push(lg); BYID[lg.id] = lg;
+    DATES.push(ds); PLAN[ds] = tasks; SIDES[ds] = sides;
+  }
+})();
+var BOSSES = ALL.filter(function(t){ return t.boss; }).map(function(t){ return { key: t.track + "-" + t.phase, task: t }; });
+
+// =====================================================================
+// STATE
+// =====================================================================
+var DEFAULT_REWARDS = [
+  { id:"r1", name:"Guilt-free movie night", cost:250 },
+  { id:"r2", name:"Order your favourite food", cost:350 },
+  { id:"r3", name:"A full lazy Sunday, zero quests", cost:600 },
+  { id:"r4", name:"Weekend trip out of the city", cost:1500 },
+  { id:"r5", name:"Buy that book or gadget you've been eyeing", cost:2200 }
+];
+var mem = null;
+function freshState(){ return { done:{}, notes:{}, log:{}, name:"Player 1", sound:true, spent:0, rewards: DEFAULT_REWARDS.slice(), redeemed:[], ts:{}, logTs:{}, rmRewards:[], metaTs:0 }; }
+function load(){
+  var s = null;
+  try { var raw = localStorage.getItem(KEY); if (raw) s = JSON.parse(raw); } catch(e) {}
+  if (!s) s = mem || freshState();
+  var f = freshState();
+  Object.keys(f).forEach(function(k){ if (s[k] === undefined) s[k] = f[k]; });
+  return s;
+}
+var S = load();
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) { mem = S; } scheduleSync(); }
+function touchLog(ds){ S.logTs = S.logTs || {}; S.logTs[ds] = Date.now(); }
+
+// =====================================================================
+// DERIVED
+// =====================================================================
+function realToday(){ return iso(new Date()); }
+function clampDate(ds){ if (ds < DATES[0]) return DATES[0]; if (ds > DATES[DATES.length-1]) return DATES[DATES.length-1]; return ds; }
+function dayStats(ds){ var a=0, e=0; (PLAN[ds] || []).forEach(function(t){ a += t.xp; if (S.done[t.id]) e += t.xp; }); return { avail:a, earned:e, pct: a ? e/a : 0 }; }
+function cleared(ds){ return dayStats(ds).pct >= 0.7; }
+function result(ds){
+  var rt = realToday(), st = dayStats(ds);
+  if (ds > rt) return st.pct >= 0.7 ? (st.pct >= 1 ? "birdie" : "par") : "upcoming";
+  if (st.pct >= 1) return "birdie";
+  if (st.pct >= 0.7) return "par";
+  if (ds === rt) return "inplay";
+  if (st.pct >= 0.4) return "bogey";
+  return "double";
+}
+var RES = {
+  birdie:   { label:"Birdie", color:"#f59e0b", score:-1 },
+  par:      { label:"Par", color:"#22c55e", score:0 },
+  bogey:    { label:"Bogey", color:"#fb923c", score:1 },
+  double:   { label:"Double bogey", color:"#ef4444", score:2 },
+  inplay:   { label:"In play", color:"#fef08a", score:null },
+  upcoming: { label:"Upcoming", color:"#ffffff", score:null }
+};
+function courseScore(){ var s = 0, any = false; DATES.forEach(function(ds){ var r = RES[result(ds)]; if (r.score !== null) { s += r.score; any = true; } }); return any ? s : null; }
+function fmtScore(s){ if (s === null) return "E"; if (s === 0) return "E"; return (s > 0 ? "+" : "") + s; }
+function mainXP(){ var x=0; ALL.forEach(function(t){ if (S.done[t.id]) x += t.xp; }); return x; }
+function sideXP(){ var x=0; SIDEALL.forEach(function(t){ if (S.done[t.id]) x += t.xp; }); return x; }
+function totalXP(){ return mainXP() + sideXP(); }
+function coins(){ var spent = (S.redeemed || []).reduce(function(a, x){ return a + (x.cost || 0); }, 0); return Math.floor(totalXP() / 5) - spent; }
+function currentStreak(){
+  var rt = realToday(); if (rt < DATES[0]) return 0;
+  var i = DATES.indexOf(clampDate(rt)), c = 0;
+  if (!cleared(DATES[i])) i--;
+  while (i >= 0 && cleared(DATES[i])) { c++; i--; }
+  return c;
+}
+function maxStreak(){ var m=0,c=0; DATES.forEach(function(ds){ if (cleared(ds)) { c++; if (c>m) m=c; } else c=0; }); return m; }
+var LEVELS = [[0,"Day One"],[300,"Warming Up"],[800,"Grinder"],[1500,"Systems Thinker"],[2500,"Builder"],[3700,"Shipper"],[5100,"Interview Ready"],[6800,"Offer Hunter"],[8800,"Escape Velocity"],[11000,"Out of Orbit"]];
+function levelInfo(xp){ var i = 0; while (i+1 < LEVELS.length && xp >= LEVELS[i+1][0]) i++; var nx = LEVELS[i+1]; return { n:i+1, title:LEVELS[i][1], base:LEVELS[i][0], next: nx ? nx[0] : null, nextTitle: nx ? nx[1] : null }; }
+function bossState(b){
+  var meta = PHASES[b.task.track].filter(function(p){ return p.id === b.task.phase; })[0];
+  var minions = ALL.filter(function(t){ return t.track === b.task.track && t.phase === b.task.phase; });
+  var hp = 0, dmg = 0; minions.forEach(function(t){ hp += t.xp; if (S.done[t.id]) dmg += t.xp; });
+  var rt = realToday(), won = !!S.done[b.task.id];
+  var state = won ? "won" : (rt < meta.from ? "locked" : (b.task.date < rt ? "overdue" : "active"));
+  return { phase: meta, hp: hp, left: won ? 0 : Math.max(0, hp - dmg), dmg: dmg, state: state, won: won };
+}
+
+// =====================================================================
+// ART
+// =====================================================================
+function rng(seed){ var a = seed * 9301 + 49297; return function(){ a = (a * 9301 + 49297) % 233280; return a / 233280; }; }
+function monster(seed, color, state){
+  var r = rng(seed), cx = 60, cy = 60, n = 11, pts = [], i;
+  for (i=0;i<n;i++){ var ang = i/n*Math.PI*2, rad = 34 + r()*12; pts.push([cx + Math.cos(ang)*rad, cy + 6 + Math.sin(ang)*rad*0.85]); }
+  function mid(a,b){ return [(a[0]+b[0])/2, (a[1]+b[1])/2]; }
+  var m0 = mid(pts[0], pts[1]), dpath = "M" + m0[0].toFixed(1) + " " + m0[1].toFixed(1);
+  for (i=1;i<=n;i++){ var p = pts[i % n], m = mid(p, pts[(i+1) % n]); dpath += " Q" + p[0].toFixed(1) + " " + p[1].toFixed(1) + " " + m[0].toFixed(1) + " " + m[1].toFixed(1); }
+  var locked = state === "locked", won = state === "won";
+  var fill = locked ? "#cbd5e1" : (won ? "#94a3b8" : color);
+  var s = '<svg viewBox="0 0 120 112" xmlns="http://www.w3.org/2000/svg">';
+  s += '<ellipse cx="60" cy="104" rx="38" ry="6" fill="rgba(30,27,75,.18)"/>';
+  if (r() > 0.35) { s += '<path d="M34 34 L28 8 L46 28 Z" fill="' + fill + '" stroke="#1e1b4b" stroke-width="3" stroke-linejoin="round"/><path d="M86 34 L92 8 L74 28 Z" fill="' + fill + '" stroke="#1e1b4b" stroke-width="3" stroke-linejoin="round"/>'; }
+  else { s += '<circle cx="40" cy="26" r="7" fill="' + fill + '" stroke="#1e1b4b" stroke-width="3"/><circle cx="80" cy="26" r="7" fill="' + fill + '" stroke="#1e1b4b" stroke-width="3"/>'; }
+  s += '<path d="' + dpath + ' Z" fill="' + fill + '" stroke="#1e1b4b" stroke-width="3.5" stroke-linejoin="round"/>';
+  s += '<ellipse cx="46" cy="76" rx="10" ry="6" fill="rgba(255,255,255,.25)"/>';
+  if (locked) { s += '<text x="60" y="70" text-anchor="middle" font-family="Arial Black,system-ui" font-size="30" fill="#1e1b4b">?</text>'; }
+  else {
+    var eyes = 1 + Math.floor(r()*3), ex, ey = 52;
+    for (i=0;i<eyes;i++){
+      ex = eyes === 1 ? 60 : (eyes === 2 ? 46 + i*28 : 40 + i*20);
+      if (won) s += '<path d="M' + (ex-6) + ' ' + (ey-6) + ' L' + (ex+6) + ' ' + (ey+6) + ' M' + (ex+6) + ' ' + (ey-6) + ' L' + (ex-6) + ' ' + (ey+6) + '" stroke="#1e1b4b" stroke-width="4" stroke-linecap="round"/>';
+      else s += '<circle cx="' + ex + '" cy="' + ey + '" r="9" fill="#fff" stroke="#1e1b4b" stroke-width="3"/><circle cx="' + (ex + 2) + '" cy="' + (ey + 1) + '" r="4" fill="#1e1b4b"/>';
+    }
+    if (won) s += '<path d="M44 82 Q60 72 76 82" fill="none" stroke="#1e1b4b" stroke-width="4" stroke-linecap="round"/>';
+    else {
+      var teeth = 4 + Math.floor(r()*3), tw = 36 / teeth, tp = "M42 74";
+      for (i=0;i<teeth;i++) tp += " L" + (42 + i*tw + tw/2).toFixed(1) + " 82 L" + (42 + (i+1)*tw).toFixed(1) + " 74";
+      s += '<path d="M40 72 Q60 96 80 72 Z" fill="#7f1d1d" stroke="#1e1b4b" stroke-width="3" stroke-linejoin="round"/><path d="' + tp + '" fill="#fff" stroke="#1e1b4b" stroke-width="2" stroke-linejoin="round"/>';
+    }
+  }
+  return s + '</svg>';
+}
+function avatarSVG(){
+  return '<rect width="66" height="66" rx="12" fill="#fef3c7"/>' +
+    '<rect x="8" y="50" width="50" height="16" rx="6" fill="#2563eb" stroke="#1e1b4b" stroke-width="2.5"/>' +
+    '<circle cx="33" cy="33" r="16" fill="#fcd9b6" stroke="#1e1b4b" stroke-width="2.5"/>' +
+    '<path d="M16 28 Q33 6 50 28 L54 30 L16 30 Z" fill="#e11d48" stroke="#1e1b4b" stroke-width="2.5" stroke-linejoin="round"/>' +
+    '<rect x="44" y="27" width="14" height="5" rx="2" fill="#e11d48" stroke="#1e1b4b" stroke-width="2"/>' +
+    '<circle cx="27" cy="36" r="2.4" fill="#1e1b4b"/><circle cx="39" cy="36" r="2.4" fill="#1e1b4b"/>' +
+    '<path d="M28 42 Q33 46 38 42" fill="none" stroke="#1e1b4b" stroke-width="2.2" stroke-linecap="round"/>';
+}
+
+// =====================================================================
+// UI HELPERS + FX
+// =====================================================================
+function $(id){ return document.getElementById(id); }
+function el(tag, cls, html){ var e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+var toastT;
+function toast(msg){ var t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove("on"); }, 2200); }
+var actx = null;
+function blip(freqs){
+  if (!S.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    freqs.forEach(function(f, i){ var o = actx.createOscillator(), g = actx.createGain(); o.type = "square"; o.frequency.value = f; g.gain.value = 0.04; o.connect(g); g.connect(actx.destination); var t0 = actx.currentTime + i*0.09; o.start(t0); o.stop(t0 + 0.08); });
+  } catch(e) {}
+}
+function confetti(){
+  var c = $("fx"); if (!c || !c.getContext) return;
+  var ctx = c.getContext("2d"); c.width = window.innerWidth; c.height = window.innerHeight;
+  var cols = ["#facc15","#22c55e","#2563eb","#e11d48","#7c3aed","#f97316"], ps = [];
+  for (var i=0;i<160;i++) ps.push({ x: c.width/2, y: c.height/3, vx: (Math.random()-0.5)*14, vy: Math.random()*-12 - 3, s: 4 + Math.random()*6, c: cols[i % cols.length], r: Math.random()*6 });
+  var t0 = performance.now();
+  (function frame(t){
+    ctx.clearRect(0,0,c.width,c.height);
+    ps.forEach(function(p){ p.vy += 0.35; p.x += p.vx; p.y += p.vy; p.r += 0.2; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.6); ctx.restore(); });
+    if (t - t0 < 2200) requestAnimationFrame(frame); else ctx.clearRect(0,0,c.width,c.height);
+  })(t0);
+}
+function victory(b){
+  var meta = BOSS_META[b.key];
+  var root = $("modalRoot");
+  root.innerHTML = '<div class="modal" id="vm"><div class="card">' + monster(meta.seed, TRACKS[b.task.track].color, "won") +
+    '<div class="big">Boss defeated!</div><div style="font-weight:900;font-size:16px">' + esc(meta.name) + '</div>' +
+    '<p class="hint">' + esc(meta.lore) + '</p><div style="margin:8px 0"><span class="xp">+' + b.task.xp + ' XP</span> <span class="coin">+' + Math.floor(b.task.xp/5) + ' coins</span></div>' +
+    '<button class="btn go" id="vmClose">Onward</button></div></div>';
+  $("vmClose").onclick = function(){ root.innerHTML = ""; };
+  confetti(); blip([523, 659, 784, 1046]);
+}
+
+// =====================================================================
+// ACTIONS
+// =====================================================================
+var sel = clampDate(realToday()), weekAnchor = sel, tab = "today";
+function toggle(id){
+  var before = levelInfo(totalXP()).n;
+  if (S.done[id]) delete S.done[id]; else S.done[id] = realToday();
+  S.ts = S.ts || {}; S.ts[id] = Date.now();
+  save();
+  var t = BYID[id];
+  if (S.done[id] && t) {
+    var b = t.boss ? BOSSES.filter(function(x){ return x.task.id === id; })[0] : null;
+    if (b) victory(b);
+    else { toast("+" + t.xp + " XP  ·  +" + Math.floor(t.xp/5) + " coins"); blip([660, 880]); }
+    var after = levelInfo(totalXP());
+    if (after.n > before) { setTimeout(function(){ toast("LEVEL UP! You are now: " + after.title); confetti(); blip([392, 523, 659, 784]); }, b ? 400 : 0); }
+    if (cleared(t.date) && dayStats(t.date).pct - t.xp / dayStats(t.date).avail < 0.7 && !t.side) setTimeout(function(){ toast("Par reached! Hole " + (DATES.indexOf(t.date)+1) + " cleared"); }, 900);
+  }
+  renderAll();
+}
+
+// =====================================================================
+// RENDER: HUD
+// =====================================================================
+function renderHUD(){
+  $("avatar").innerHTML = avatarSVG();
+  var xp = totalXP(), L = levelInfo(xp);
+  $("pName").textContent = S.name || "Player 1";
+  $("pTitle").textContent = "Lv " + L.n + " · " + L.title;
+  if (L.next) { $("xpFill").style.width = Math.min(100, (xp - L.base) / (L.next - L.base) * 100) + "%"; $("xpText").textContent = xp + " / " + L.next + " XP"; }
+  else { $("xpFill").style.width = "100%"; $("xpText").textContent = xp + " XP · MAX"; }
+  var rt = realToday();
+  $("sHole").textContent = rt < DATES[0] ? "Tee 12/11" : (rt > DATES[DATES.length-1] ? "18th green" : (DATES.indexOf(rt)+1) + "/" + NDAYS);
+  $("sStreak").textContent = currentStreak() + "d";
+  $("sScore").textContent = fmtScore(courseScore());
+  $("sBoss").textContent = BOSSES.filter(function(b){ return S.done[b.task.id]; }).length + "/" + BOSSES.length;
+  $("sCoins").textContent = coins();
+  var w = daysBetween(rt, WAVE); $("sWave").textContent = w > 0 ? w + "d" : "LIVE";
+}
+
+// =====================================================================
+// RENDER: TODAY
+// =====================================================================
+function ringSVG(pct){
+  var r = 40, c = 2*Math.PI*r, off = c*(1-Math.min(1,pct)), col = pct >= 1 ? "#f59e0b" : (pct >= 0.7 ? "#22c55e" : "#2563eb");
+  return '<circle cx="50" cy="50" r="44" fill="#fff" stroke="#1e1b4b" stroke-width="3"/>' +
+    '<circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" stroke-width="9"/>' +
+    '<circle cx="50" cy="50" r="40" fill="none" stroke="' + col + '" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + c + '" stroke-dashoffset="' + off + '" transform="rotate(-90 50 50)"/>' +
+    '<line x1="50" y1="6" x2="50" y2="15" stroke="#1e1b4b" stroke-width="2"/>' +
+    '<text x="50" y="55" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="19" font-weight="900" fill="#1e1b4b">' + Math.round(pct*100) + '%</text>';
+}
+function questCard(t){
+  var tr = TRACKS[t.track], done = !!S.done[t.id];
+  var q = el("div", "quest" + (done ? " done" : "") + (t.boss ? " boss" : "") + (t.side ? " side" : ""));
+  q.style.setProperty("--c", tr.color);
+  var html = '<div class="stripe"></div><div class="qbody"><div class="qtag">' + esc(tr.name);
+  if (t.boss) { var b = BOSSES.filter(function(x){ return x.task.id === t.id; })[0]; html += ' &nbsp;<span class="bossbadge">BOSS: ' + esc(BOSS_META[b.key].name) + '</span>'; }
+  html += '</div><div class="qt">' + esc(t.t) + '</div>';
+  if (t.d) html += '<div class="qd">' + esc(t.d) + '</div>';
+  if (!t.side && t.track !== "move") {
+    var links = '', ll = Array.isArray(t.l) ? t.l : (t.l ? [["Open lesson", t.l]] : []);
+    ll.forEach(function(x, i){ links += '<a class="lk' + (i === 0 ? ' main' : '') + '" href="' + esc(x[1]) + '" target="_blank" rel="noopener">' + esc(x[0]) + '</a>'; });
+    if (links) html += '<div class="links">' + links + '</div>';
+  }
+  html += '<div class="qmeta"><span class="xp">+' + t.xp + ' XP</span><span class="coin">+' + Math.floor(t.xp/5) + ' c</span>';
+  if (t.mins) html += '<span>~' + t.mins + ' min</span><button class="btn sm" data-focus="' + esc(t.id) + '">Focus</button>';
+  if (t.auto) html += '<span>Auto-completes from your round log</span>';
+  html += '</div></div>';
+  q.innerHTML = html;
+  if (!t.auto) { var btn = el("button", "complete", done ? "Undo" : (t.boss ? "Strike!" : "Complete")); btn.onclick = function(){ toggle(t.id); }; q.appendChild(btn); }
+  var fb = q.querySelector("[data-focus]");
+  if (fb) fb.onclick = function(){ setTimer(Math.min(t.mins, 90), t.t); };
+  return q;
+}
+function renderToday(){
+  var ds = sel, st = dayStats(ds), idx = DATES.indexOf(ds) + 1, rs = RES[result(ds)];
+  $("ring").innerHTML = ringSVG(st.pct);
+  $("dHole").textContent = "Hole " + idx + " · " + nice(ds);
+  $("dSub").textContent = (ds === realToday() ? "Today · " : "") + st.earned + " / " + st.avail + " XP · Par is " + Math.ceil(st.avail * 0.7) + " XP";
+  var r = $("dResult"); r.textContent = rs.label; r.style.background = rs.color;
+  var ch = $("dChips"); ch.innerHTML = "";
+  ["sd","ai","cc","lld","career"].forEach(function(k){ var c = el("span","chip", esc(TRACKS[k].name) + ": " + esc(phaseOf(k, ds).name)); c.style.color = TRACKS[k].color; c.style.borderColor = TRACKS[k].color; ch.appendChild(c); });
+  var box = $("dQuests"); box.innerHTML = ""; (PLAN[ds] || []).forEach(function(t){ box.appendChild(questCard(t)); });
+  renderSides();
+  var lg = S.log[ds] || {};
+  $("lHours").value = lg.h || ""; $("lLearned").value = S.notes[ds] || ""; $("lBlocker").value = lg.b || ""; $("lWeight").value = lg.w || "";
+  $("lWeight").oninput = function(){ S.log[ds] = S.log[ds] || {}; S.log[ds].w = parseFloat(this.value) || 0; touchLog(ds); save(); };
+  var en = $("lEnergy"); en.innerHTML = "";
+  [1,2,3,4,5].forEach(function(v){ var b = el("button", lg.e === v ? "on" : "", String(v)); b.title = ["","Drained","Low","Okay","Good","On fire"][v]; b.onclick = function(){ S.log[ds] = S.log[ds] || {}; S.log[ds].e = v; touchLog(ds); save(); renderToday(); }; en.appendChild(b); });
+  $("lHours").oninput = function(){ S.log[ds] = S.log[ds] || {}; S.log[ds].h = parseFloat(this.value) || 0; touchLog(ds); syncLog(ds); };
+  $("lLearned").oninput = function(){ S.notes[ds] = this.value; touchLog(ds); syncLog(ds); };
+  $("lBlocker").oninput = function(){ S.log[ds] = S.log[ds] || {}; S.log[ds].b = this.value; touchLog(ds); save(); };
+  renderLiveBosses(); renderCatchup();
+}
+function syncLog(ds){
+  var lg = S.log[ds] || {}, ok = (lg.h || 0) > 0 && (S.notes[ds] || "").trim().length >= 10, id = ds + "-side-log";
+  var was = !!S.done[id];
+  if (ok !== was) { S.ts = S.ts || {}; S.ts[id] = Date.now(); }
+  if (ok && !was) { S.done[id] = realToday(); toast("Round logged: +15 XP"); blip([700, 900]); }
+  if (!ok && was) delete S.done[id];
+  save(); renderHUD(); if (ok !== was) renderSides();
+}
+function renderSides(){ var sb = $("dSides"); sb.innerHTML = ""; (SIDES[sel] || []).forEach(function(t){ sb.appendChild(questCard(t)); }); }
+function renderLiveBosses(){
+  var box = $("liveBosses"); box.innerHTML = "";
+  var live = BOSSES.filter(function(b){ var s = bossState(b); return s.state === "active" || s.state === "overdue"; });
+  if (!live.length) { box.innerHTML = '<div class="hint">No bosses in play right now.</div>'; return; }
+  live.forEach(function(b){
+    var s = bossState(b), meta = BOSS_META[b.key], days = daysBetween(realToday(), b.task.date);
+    var m = el("div","mini"); m.style.cursor = "pointer";
+    m.innerHTML = '<span class="dot" style="background:' + TRACKS[b.task.track].color + '"></span><div class="c2"><div style="font-weight:800">' + esc(meta.name) + '</div><div class="dt">' +
+      (days > 0 ? "Fight in " + days + " days" : (days === 0 ? "Fight today!" : "Still standing, " + Math.abs(days) + " days overdue")) + ' · ' + s.left + '/' + s.hp + ' HP</div>' +
+      '<div class="hpwrap"><div class="hpfill" style="width:' + (s.hp ? s.left / s.hp * 100 : 0) + '%"></div></div></div>';
+    m.onclick = function(){ sel = b.task.date; renderAll(); };
+    box.appendChild(m);
+  });
+}
+function renderCatchup(){
+  var cu = $("catchup"); cu.innerHTML = ""; var rt = realToday();
+  var miss = ALL.filter(function(t){ return t.date < rt && !S.done[t.id] && t.track !== "move"; });
+  if (!miss.length) { cu.innerHTML = '<div class="hint">Nothing behind. Clean card.</div>'; return; }
+  miss.slice(0, 10).forEach(function(t){
+    var m = el("div","mini");
+    m.innerHTML = '<span class="dot" style="background:' + TRACKS[t.track].color + '"></span><div class="c2"><div style="font-weight:700">' + esc(t.t) + '</div><div class="dt">Hole ' + (DATES.indexOf(t.date)+1) + ' · ' + short(t.date) + ' · +' + t.xp + ' XP</div></div>';
+    var b = el("button","btn sm","Done"); b.onclick = function(){ toggle(t.id); }; m.appendChild(b); cu.appendChild(m);
+  });
+  if (miss.length > 10) cu.appendChild(el("div","hint", "+" + (miss.length - 10) + " more. Over 15 behind? Cut scope instead of piling up."));
+}
+
+// ---------- timer ----------
+var tLeft = 50*60, tRun = null;
+function fmtT(s){ return pad(Math.floor(s/60)) + ":" + pad(s%60); }
+function setTimer(min, label){ clearInterval(tRun); tRun = null; tLeft = min*60; $("tClock").textContent = fmtT(tLeft); $("tLabel").textContent = label || "Focus block"; $("tStart").textContent = "Start"; if (label) toast("Timer set: " + min + " min"); }
+function tick(){ tLeft--; $("tClock").textContent = fmtT(tLeft); document.title = fmtT(tLeft) + " · Escape Velocity"; if (tLeft <= 0) { clearInterval(tRun); tRun = null; $("tStart").textContent = "Start"; document.title = "Escape Velocity"; toast("Focus block done. Tick the quest if it's finished."); blip([880, 660, 880]); } }
+
+// =====================================================================
+// RENDER: MAP
+// =====================================================================
+var MAP = { W:1000, cols:12, mx:80, top:120, rowH:128 };
+function holePos(i){ var r = Math.floor(i / MAP.cols), c = i % MAP.cols, sp = (MAP.W - 2*MAP.mx) / (MAP.cols - 1); var x = r % 2 === 0 ? MAP.mx + c*sp : MAP.W - MAP.mx - c*sp; return [x, MAP.top + r*MAP.rowH]; }
+function renderMap(){
+  var rows = Math.ceil(NDAYS / MAP.cols), H = MAP.top + (rows - 1) * MAP.rowH + 170, rt = realToday();
+  var r = rng(7), s = '<svg viewBox="0 0 ' + MAP.W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+  s += '<rect width="' + MAP.W + '" height="' + H + '" fill="#86efac"/>';
+  for (var sx = 0; sx < MAP.W; sx += 80) s += '<rect x="' + sx + '" y="0" width="40" height="' + H + '" fill="#7ddf9f"/>';
+  // decor between rows
+  for (var row = 0; row < rows; row++) {
+    var y = MAP.top + row*MAP.rowH + MAP.rowH/2;
+    if (row === rows - 1) y = MAP.top + row*MAP.rowH + 70;
+    for (var k = 0; k < 4; k++) {
+      var x = MAP.mx + 30 + r() * (MAP.W - 2*MAP.mx - 60), kind = r();
+      if (kind < 0.18) s += '<ellipse cx="' + x.toFixed(0) + '" cy="' + y.toFixed(0) + '" rx="' + (28 + r()*20).toFixed(0) + '" ry="14" fill="#93c5fd" stroke="#1e1b4b" stroke-width="2.5"/>';
+      else if (kind < 0.42) s += '<ellipse cx="' + x.toFixed(0) + '" cy="' + y.toFixed(0) + '" rx="' + (20 + r()*16).toFixed(0) + '" ry="11" fill="#fde68a" stroke="#1e1b4b" stroke-width="2.5"/>';
+      else { var tx = x.toFixed(0), ty = y.toFixed(0); s += '<rect x="' + (tx-3) + '" y="' + (+ty + 4) + '" width="6" height="10" fill="#92400e" stroke="#1e1b4b" stroke-width="2"/><circle cx="' + tx + '" cy="' + ty + '" r="13" fill="#16a34a" stroke="#1e1b4b" stroke-width="2.5"/>'; }
+    }
+  }
+  // fairway path
+  var d = "", p0 = holePos(0); d = "M " + (p0[0] - 50) + " " + p0[1] + " L " + p0[0] + " " + p0[1];
+  for (var i = 1; i < NDAYS; i++) {
+    var a = holePos(i-1), b = holePos(i);
+    if (a[1] !== b[1]) d += " A " + (MAP.rowH/2) + " " + (MAP.rowH/2) + " 0 0 " + (a[0] > MAP.W/2 ? 1 : 0) + " " + b[0] + " " + b[1];
+    else d += " L " + b[0] + " " + b[1];
+  }
+  var last = holePos(NDAYS - 1), lastRow = Math.floor((NDAYS-1) / MAP.cols), dir = lastRow % 2 === 0 ? 1 : -1;
+  var club = [last[0] + dir*120, last[1]];
+  d += " L " + club[0] + " " + club[1];
+  s += '<path d="' + d + '" fill="none" stroke="#1e1b4b" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>';
+  s += '<path d="' + d + '" fill="none" stroke="#bbf7d0" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/>';
+  s += '<path d="' + d + '" fill="none" stroke="#86efac" stroke-width="2" stroke-dasharray="6 10" stroke-linecap="round"/>';
+  // tee
+  s += '<g><rect x="16" y="' + (p0[1] - 92) + '" width="150" height="30" rx="8" fill="#facc15" stroke="#1e1b4b" stroke-width="3"/><text x="91" y="' + (p0[1] - 72) + '" text-anchor="middle" font-family="Arial Black,system-ui" font-size="12" fill="#1e1b4b">TEE OFF · 12 NOV</text></g>';
+  // bosses by date
+  var bossBy = {}; BOSSES.forEach(function(bb){ (bossBy[bb.task.date] = bossBy[bb.task.date] || []).push(bb); });
+  // holes
+  var lastBossIdx = -1;
+  for (var j = 0; j < NDAYS; j++) {
+    var ds = DATES[j], pos = holePos(j), res = result(ds), col = RES[res].color, isToday = ds === rt;
+    var dd = parseIso(ds);
+    if (dd.getDate() === 1) s += '<g><rect x="' + (pos[0] - 22) + '" y="' + (pos[1] + 30) + '" width="44" height="18" rx="5" fill="#fff" stroke="#1e1b4b" stroke-width="2.5"/><text x="' + pos[0] + '" y="' + (pos[1] + 43) + '" text-anchor="middle" font-family="Arial Black,system-ui" font-size="10" fill="#1e1b4b">' + MONS[dd.getMonth()].toUpperCase() + '</text></g>';
+    if (bossBy[ds]) {
+      var bl = bossBy[ds], allWon = bl.every(function(x){ return S.done[x.task.id]; });
+      var label = bl.length > 1 ? bl.length + " BOSSES" : BOSS_META[bl[0].key].name.toUpperCase();
+      s += '<line x1="' + pos[0] + '" y1="' + (pos[1] - 12) + '" x2="' + pos[0] + '" y2="' + (pos[1] - 52) + '" stroke="#1e1b4b" stroke-width="3"/>';
+      s += '<path d="M' + pos[0] + ' ' + (pos[1] - 52) + ' L' + (pos[0] + 26) + ' ' + (pos[1] - 44) + ' L' + pos[0] + ' ' + (pos[1] - 36) + ' Z" fill="' + (allWon ? "#22c55e" : "#b91c1c") + '" stroke="#1e1b4b" stroke-width="2.5" stroke-linejoin="round"/>';
+      var tw = Math.max(70, label.length * 7.4 + 14), lift = (lastBossIdx >= 0 && j - lastBossIdx <= 2 && Math.floor(j / MAP.cols) === Math.floor(lastBossIdx / MAP.cols)) ? 24 : 0;
+      var lx = Math.min(Math.max(pos[0] - tw/2, 6), MAP.W - 6 - tw);
+      if (lift) s += '<line x1="' + pos[0] + '" y1="' + (pos[1] - 58) + '" x2="' + pos[0] + '" y2="' + (pos[1] - 58 - lift) + '" stroke="#1e1b4b" stroke-width="2"/>';
+      s += '<rect x="' + lx + '" y="' + (pos[1] - 78 - lift) + '" width="' + tw + '" height="20" rx="6" fill="' + (allWon ? "#dcfce7" : "#fee2e2") + '" stroke="#1e1b4b" stroke-width="2.5"/>';
+      s += '<text x="' + (lx + tw/2) + '" y="' + (pos[1] - 64 - lift) + '" text-anchor="middle" font-family="Arial Black,system-ui" font-size="10" fill="#1e1b4b">' + esc(label) + (allWon ? " ✓" : "") + '</text>';
+      lastBossIdx = j;
+    }
+    s += '<g class="hole" data-date="' + ds + '"><title>Hole ' + (j+1) + ' · ' + nice(ds) + ' · ' + RES[res].label + '</title>';
+    if (isToday) s += '<circle cx="' + pos[0] + '" cy="' + pos[1] + '" r="18" fill="none" stroke="#f59e0b" stroke-width="4"><animate attributeName="r" values="16;24;16" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0.2;1" dur="1.6s" repeatCount="indefinite"/></circle>';
+    s += '<circle cx="' + pos[0] + '" cy="' + pos[1] + '" r="14" fill="' + col + '" stroke="#1e1b4b" stroke-width="3"/>';
+    s += '<text x="' + pos[0] + '" y="' + (pos[1] + 4) + '" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="900" fill="#1e1b4b">' + (j+1) + '</text></g>';
+  }
+  // clubhouse
+  var cx0 = club[0], cy0 = club[1];
+  s += '<g><rect x="' + (cx0 - 46) + '" y="' + (cy0 - 30) + '" width="92" height="56" rx="6" fill="#fef3c7" stroke="#1e1b4b" stroke-width="3"/><path d="M' + (cx0 - 56) + ' ' + (cy0 - 28) + ' L' + cx0 + ' ' + (cy0 - 62) + ' L' + (cx0 + 56) + ' ' + (cy0 - 28) + ' Z" fill="#e11d48" stroke="#1e1b4b" stroke-width="3" stroke-linejoin="round"/>' +
+    '<rect x="' + (cx0 - 10) + '" y="' + (cy0 - 2) + '" width="20" height="28" fill="#92400e" stroke="#1e1b4b" stroke-width="2.5"/>' +
+    '<text x="' + cx0 + '" y="' + (cy0 + 50) + '" text-anchor="middle" font-family="Arial Black,system-ui" font-size="13" fill="#1e1b4b">CLUBHOUSE: OFFER + EXIT</text></g>';
+  // ball + player
+  var bi = rt < DATES[0] ? -1 : (rt > DATES[DATES.length-1] ? NDAYS : DATES.indexOf(rt));
+  var bp = bi < 0 ? [p0[0] - 40, p0[1]] : (bi >= NDAYS ? [cx0, cy0 - 70] : holePos(bi));
+  s += '<g id="ball"><g><animateTransform attributeName="transform" type="translate" values="0 0; 0 -8; 0 0" dur="0.9s" repeatCount="indefinite"/>' +
+    '<circle cx="' + (bp[0] + 20) + '" cy="' + (bp[1] - 26) + '" r="9" fill="#fff" stroke="#1e1b4b" stroke-width="3"/>' +
+    '<circle cx="' + (bp[0] + 17) + '" cy="' + (bp[1] - 28) + '" r="1.4" fill="#94a3b8"/><circle cx="' + (bp[0] + 22) + '" cy="' + (bp[1] - 24) + '" r="1.4" fill="#94a3b8"/><circle cx="' + (bp[0] + 23) + '" cy="' + (bp[1] - 29) + '" r="1.4" fill="#94a3b8"/>' +
+    '<rect x="' + (bp[0] + 2) + '" y="' + (bp[1] - 58) + '" width="36" height="18" rx="6" fill="#1e1b4b"/><text x="' + (bp[0] + 20) + '" y="' + (bp[1] - 45) + '" text-anchor="middle" font-family="Arial Black,system-ui" font-size="10" fill="#facc15">YOU</text></g></g>';
+  s += '</svg>';
+  $("mapWrap").innerHTML = s;
+  $("mapWrap").querySelectorAll(".hole").forEach(function(g){ g.addEventListener("click", function(){ sel = g.getAttribute("data-date"); switchTab("today"); }); });
+  var played = Math.max(0, Math.min(NDAYS, bi < 0 ? 0 : bi + 1));
+  $("mapFill").style.width = (played / NDAYS * 100) + "%";
+  var nb = BOSSES.filter(function(b){ return !S.done[b.task.id] && b.task.date >= rt; })[0];
+  $("mapSub").textContent = "Hole " + Math.max(1, Math.min(played, NDAYS)) + " of " + NDAYS + " · " + Math.max(0, NDAYS - played) + " holes to the clubhouse" + (nb ? " · next boss: " + BOSS_META[nb.key].name + " in " + daysBetween(rt, nb.task.date) + " days" : "");
+}
+
+// =====================================================================
+// RENDER: ARENA
+// =====================================================================
+function renderArena(){
+  var ar = $("arena"); ar.innerHTML = "";
+  BOSSES.slice().sort(function(a,b){ return a.task.date < b.task.date ? -1 : 1; }).forEach(function(b){
+    var s = bossState(b), meta = BOSS_META[b.key], tr = TRACKS[b.task.track];
+    var stLabel = { locked:"LOCKED", active:"IN PLAY", overdue:"STILL STANDING", won:"DEFEATED" }[s.state];
+    var c = el("div", "boss " + s.state);
+    c.innerHTML = '<span class="bstate">' + stLabel + '</span>' + monster(meta.seed, tr.color, s.state) +
+      (s.won ? '<div class="stamp">DEFEATED</div>' : '') +
+      '<div class="bname">' + esc(meta.name) + '</div>' +
+      '<div class="bsub">' + esc(tr.name) + ' · ' + esc(s.phase.name) + ' · fight on ' + short(b.task.date) + '</div>' +
+      '<div class="hpnum"><span>HP</span><span>' + s.left + ' / ' + s.hp + '</span></div>' +
+      '<div class="hpwrap"><div class="hpfill" style="width:' + (s.hp ? s.left / s.hp * 100 : 0) + '%"></div></div>' +
+      '<div class="bfoot"><i>' + esc(meta.lore) + '</i><br><b>Finishing blow:</b> ' + esc(b.task.t.replace(/^BOSS:\s*/, "")) + '</div>';
+    var go = el("button", "btn sm " + (s.won ? "" : "go"), s.won ? "Revisit" : "Go to the fight"); go.style.marginTop = "10px";
+    go.onclick = function(){ sel = b.task.date; switchTab("today"); };
+    c.appendChild(go); ar.appendChild(c);
+  });
+}
+
+// =====================================================================
+// RENDER: SCORECARD
+// =====================================================================
+function mondayOf(ds){ var d = parseIso(ds); return addDays(d, -((d.getDay() + 6) % 7)); }
+function renderScore(){
+  var mon = mondayOf(weekAnchor), g = $("weekGrid"); g.innerHTML = "";
+  $("wLabel").textContent = "Week of " + short(iso(mon));
+  for (var i=0;i<7;i++){
+    var ds = iso(addDays(mon, i)), w = el("div","wday" + (ds === realToday() ? " today" : ""));
+    if (!PLAN[ds]) { w.innerHTML = '<h4>' + nice(ds) + '</h4><div class="pct">Off the course</div>'; w.style.opacity = ".5"; g.appendChild(w); continue; }
+    var st = dayStats(ds), rs = RES[result(ds)];
+    w.innerHTML = '<h4>Hole ' + (DATES.indexOf(ds)+1) + ' · ' + nice(ds) + '</h4><div class="pct">' + Math.round(st.pct*100) + '% · <b style="color:#1e1b4b;background:' + rs.color + ';padding:0 5px;border-radius:5px;border:1.5px solid #1e1b4b">' + rs.label + '</b></div>';
+    PLAN[ds].forEach(function(t){ var x = el("div","wtask" + (S.done[t.id] ? " done" : ""), (t.boss ? "<b>BOSS:</b> " : "") + esc(t.t)); x.style.setProperty("--c", TRACKS[t.track].color); w.appendChild(x); });
+    (function(d){ w.onclick = function(){ sel = d; switchTab("today"); }; })(ds);
+    g.appendChild(w);
+  }
+  var tb = $("scTable"), first = mondayOf(DATES[0]), html = '<tr><th>Week</th>' + DOWS.slice(1).concat(["Sun"]).map(function(x){ return '<th>' + x + '</th>'; }).join("") + '<th>Score</th></tr>';
+  for (var wk = 0; wk < 16; wk++){
+    var row = '<tr><th>W' + (wk+1) + '<br><span style="font-weight:600">' + short(iso(addDays(first, wk*7))) + '</span></th>', tot = 0, any = false;
+    for (var dI = 0; dI < 7; dI++){
+      var dds = iso(addDays(first, wk*7 + dI));
+      if (!PLAN[dds]) { row += '<td class="off">-</td>'; continue; }
+      var rr = RES[result(dds)];
+      if (rr.score !== null) { tot += rr.score; any = true; }
+      row += '<td data-date="' + dds + '" style="background:' + rr.color + '" title="' + nice(dds) + ' · ' + rr.label + '">' + (DATES.indexOf(dds)+1) + '<br>' + (rr.score === null ? "" : (rr.score > 0 ? "+" + rr.score : (rr.score === 0 ? "E" : rr.score))) + '</td>';
+    }
+    row += '<td class="tot">' + (any ? fmtScore(tot) : "-") + '</td></tr>';
+    html += row;
+  }
+  tb.innerHTML = html;
+  tb.querySelectorAll("td[data-date]").forEach(function(td){ td.onclick = function(){ sel = td.getAttribute("data-date"); switchTab("today"); }; });
+}
+
+// =====================================================================
+// RENDER: TROPHIES
+// =====================================================================
+function bossWon(key){ return BOSSES.some(function(b){ return b.key === key && S.done[b.task.id]; }); }
+function weekScores(){ var out = [], first = mondayOf(DATES[0]); for (var wk=0; wk<16; wk++){ var tot = 0, full = true; for (var i=0;i<7;i++){ var ds = iso(addDays(first, wk*7+i)); if (!PLAN[ds]) continue; var r = RES[result(ds)]; if (r.score === null) { full = false; continue; } tot += r.score; } out.push({ tot: tot, full: full }); } return out; }
+var BADGES = [
+  ["1","First Swing","Complete any quest.", function(){ return ALL.some(function(t){ return S.done[t.id]; }); }],
+  ["HIO","Hole in One","Score a Birdie (100%) on any hole.", function(){ return DATES.some(function(ds){ return result(ds) === "birdie"; }); }],
+  ["7","Week Warrior","Reach a 7-day streak.", function(){ return maxStreak() >= 7; }],
+  ["21","Habit Formed","Reach a 21-day streak.", function(){ return maxStreak() >= 21; }],
+  ["45","Unstoppable","Reach a 45-day streak.", function(){ return maxStreak() >= 45; }],
+  ["-3","Under Par Week","Finish a full week at -3 or better.", function(){ return weekScores().some(function(w){ return w.full && w.tot <= -3; }); }],
+  ["CB","Comeback Kid","Make par right after a bogey or worse.", function(){ for (var i=1;i<DATES.length;i++){ var a = result(DATES[i-1]), b = result(DATES[i]); if ((a === "bogey" || a === "double") && (b === "par" || b === "birdie")) return true; } return false; }],
+  ["B1","First Blood","Defeat your first boss.", function(){ return BOSSES.some(function(b){ return S.done[b.task.id]; }); }],
+  ["WR","Wraith Banisher","Defeat The Blank Page Wraith.", function(){ return bossWon("sd-fund"); }],
+  ["GPT","Attention Span","Defeat The Transformer.", function(){ return bossWon("ai-p1"); }],
+  ["TT","Titan Tamer","Defeat Throughput Titan.", function(){ return bossWon("ai-p2"); }],
+  ["GK","Gate Crasher","Defeat The Gatekeeper.", function(){ return bossWon("ai-p3"); }],
+  ["HH","Hydra Slayer","Defeat the Hallucination Hydra.", function(){ return bossWon("ai-p4"); }],
+  ["LP","Loop Breaker","Defeat The Infinite Loop.", function(){ return bossWon("ai-p5"); }],
+  ["RD","Wyrm Hunter","Defeat the Redis Wyrm.", function(){ return bossWon("cc-redis"); }],
+  ["KF","Log Lord","Defeat the Kafka Leviathan.", function(){ return bossWon("cc-kafka"); }],
+  ["25","Architect","25 out-loud designs, AI designs or mocks done.", function(){ return ALL.filter(function(t){ return t.track==="sd" && S.done[t.id] && /^(Out loud|Mock|Speed run|AI system design|BOSS: Cold|BOSS: Final|Problem)/.test(t.t); }).length >= 25; }],
+  ["SQ","Side Hustler","Complete 25 side quests.", function(){ return SIDEALL.filter(function(t){ return S.done[t.id]; }).length >= 25; }],
+  ["LOG","Captain's Log","Log 14 rounds.", function(){ return SIDEALL.filter(function(t){ return t.auto && S.done[t.id]; }).length >= 14; }],
+  ["PL","Pipeline Builder","30 career quests done.", function(){ return ALL.filter(function(t){ return t.track==="career" && S.done[t.id]; }).length >= 30; }],
+  ["$","Treat Yourself","Redeem your first reward.", function(){ return (S.redeemed || []).length > 0; }],
+  ["KG","On the Scale","Log your morning weight on 21 days.", function(){ return weights().length >= 21; }],
+  ["3KG","First 3 kg","7-day average at or below 90 kg.", function(){ var a = latestAvg(); return a !== null && a <= 90; }],
+  ["1/2","Halfway There","7-day average at or below 87.5 kg.", function(){ var a = latestAvg(); return a !== null && a <= 87.5; }],
+  ["82","Goal Weight","7-day average at or below 82 kg.", function(){ var a = latestAvg(); return a !== null && a <= 82; }],
+  ["GYM","Iron Habit","Complete 20 gym sessions.", function(){ return ALL.filter(function(t){ return t.track === "move" && /^(Lower body|Upper body)/.test(t.t) && S.done[t.id]; }).length >= 20; }],
+  ["LLD","Machine Coder","Defeat The Machine Coder (mock LLD round).", function(){ return bossWon("lld-code"); }],
+  ["EV","Escape Velocity","Defeat every boss.", function(){ return BOSSES.every(function(b){ return S.done[b.task.id]; }); }]
+];
+function renderTrophies(){
+  var xp = totalXP(), L = levelInfo(xp), rt = realToday();
+  var played = DATES.filter(function(d){ return d <= rt; });
+  var hours = 0, en = 0, enN = 0; Object.keys(S.log).forEach(function(k){ var l = S.log[k]; hours += l.h || 0; if (l.e) { en += l.e; enN++; } });
+  var sg = $("sgrid"); sg.innerHTML = "";
+  [["Level", L.n + " · " + L.title],["Total XP", xp],["Course score", fmtScore(courseScore())],["Holes at par+", played.filter(cleared).length + "/" + played.length],["Best streak", maxStreak() + " days"],["Bosses", BOSSES.filter(function(b){ return S.done[b.task.id]; }).length + "/" + BOSSES.length],["Hours logged", hours],["Avg energy", enN ? (en/enN).toFixed(1) + "/5" : "-"]].forEach(function(s){ sg.appendChild(el("div","stat",'<div class="k">' + s[0] + '</div><div class="v">' + esc(s[1]) + '</div>')); });
+  var bg = $("badges"); bg.innerHTML = "";
+  BADGES.forEach(function(b){ var ok = false; try { ok = b[3](); } catch(e) {} bg.appendChild(el("div","badge" + (ok ? "" : " locked"), '<div class="bi">' + esc(b[0]) + '</div><div class="bt">' + esc(b[1]) + '</div><div class="bd">' + esc(b[2]) + '</div>')); });
+  var tb = $("trackbars"); tb.innerHTML = "";
+  ["sd","ai","cc","lld","career","move","side"].forEach(function(k){
+    var a=0,e=0, list = k === "side" ? SIDEALL : ALL;
+    list.forEach(function(t){ if (t.track===k){ a+=t.xp; if (S.done[t.id]) e+=t.xp; } });
+    tb.appendChild(el("div","tbar", '<div class="tl"><span>' + TRACKS[k].name + '</span><span>' + e + ' / ' + a + '</span></div><div class="b"><div style="width:' + (a ? e/a*100 : 0) + '%;background:' + TRACKS[k].color + '"></div></div>'));
+  });
+}
+
+// =====================================================================
+// RENDER: LIBRARY / SHOP / SAVE
+// =====================================================================
+// =====================================================================
+// RENDER: BODY
+// =====================================================================
+function weights(){ return DATES.filter(function(d){ return S.log[d] && S.log[d].w > 0; }).map(function(d){ return [d, S.log[d].w]; }); }
+function avg7(upTo){ var w = weights().filter(function(x){ return x[0] <= upTo && daysBetween(x[0], upTo) < 7; }); if (!w.length) return null; return w.reduce(function(a,x){ return a + x[1]; }, 0) / w.length; }
+function latestAvg(){ var w = weights(); if (!w.length) return null; return avg7(w[w.length-1][0]); }
+function paceAt(ds){ var t = daysBetween(DATES[0], ds) / (NDAYS - 1); return BODY.start + (BODY.goal - BODY.start) * Math.max(0, Math.min(1, t)); }
+function renderBody(){
+  var w = weights(), last = w.length ? w[w.length-1] : null, a = latestAvg();
+  var sg = $("bodyStats"); sg.innerHTML = "";
+  var lost = a !== null ? (BODY.start - a) : null;
+  var onPace = (last && a !== null) ? (a <= paceAt(last[0]) + 0.3) : null;
+  [["Start", BODY.start + " kg"], ["Latest", last ? last[1] + " kg" : "-"], ["7-day average", a !== null ? a.toFixed(1) + " kg" : "-"],
+   ["Lost so far", lost !== null ? lost.toFixed(1) + " kg" : "-"], ["To goal", a !== null ? Math.max(0, a - BODY.goal).toFixed(1) + " kg" : (BODY.start - BODY.goal) + " kg"],
+   ["Pace", onPace === null ? "-" : (onPace ? "On pace" : "Behind pace")], ["BMI now", ((a || BODY.start) / Math.pow(BODY.heightCm/100, 2)).toFixed(1)]
+  ].forEach(function(s){ sg.appendChild(el("div","stat",'<div class="k">' + s[0] + '</div><div class="v">' + esc(s[1]) + '</div>')); });
+  // chart
+  var W = 900, H = 300, pl = 44, pr = 16, pt = 16, pb = 30, lo = 80, hi = 95;
+  function X(ds){ return pl + daysBetween(DATES[0], ds) / (NDAYS - 1) * (W - pl - pr); }
+  function Y(v){ return pt + (hi - v) / (hi - lo) * (H - pt - pb); }
+  var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">';
+  for (var v = lo; v <= hi; v += 2.5) s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="#e2e8f0"/><text x="' + (pl - 6) + '" y="' + (Y(v) + 4) + '" text-anchor="end" font-size="11" fill="#5b5f7a">' + v + '</text>';
+  ["2026-12-01","2027-01-01","2027-02-01"].forEach(function(m){ s += '<line x1="' + X(m) + '" x2="' + X(m) + '" y1="' + pt + '" y2="' + (H - pb) + '" stroke="#cbd5e1" stroke-dasharray="4 4"/><text x="' + X(m) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#5b5f7a">' + MONS[parseIso(m).getMonth()].toUpperCase() + '</text>'; });
+  s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(BODY.goal) + '" y2="' + Y(BODY.goal) + '" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="8 5"/><text x="' + (W - pr - 4) + '" y="' + (Y(BODY.goal) - 6) + '" text-anchor="end" font-size="12" font-weight="900" fill="#16a34a">GOAL 82 kg</text>';
+  s += '<line x1="' + X(DATES[0]) + '" y1="' + Y(BODY.start) + '" x2="' + X(DATES[NDAYS-1]) + '" y2="' + Y(BODY.goal) + '" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="3 5"/><text x="' + (pl + 8) + '" y="' + (Y(BODY.start) - 6) + '" font-size="11" font-weight="800" fill="#b45309">pace line (~0.7 kg/week)</text>';
+  if (w.length) {
+    var line = w.map(function(x){ return X(x[0]).toFixed(1) + "," + Y(avg7(x[0])).toFixed(1); }).join(" ");
+    s += '<polyline points="' + line + '" fill="none" stroke="#2563eb" stroke-width="3.5" stroke-linejoin="round"/>';
+    w.forEach(function(x){ s += '<circle cx="' + X(x[0]).toFixed(1) + '" cy="' + Y(Math.max(lo, Math.min(hi, x[1]))).toFixed(1) + '" r="3.5" fill="#fff" stroke="#1e1b4b" stroke-width="2"><title>' + nice(x[0]) + ': ' + x[1] + ' kg</title></circle>'; });
+  } else s += '<text x="' + (W/2) + '" y="' + (H/2) + '" text-anchor="middle" font-size="14" font-weight="800" fill="#5b5f7a">Log your morning weight in Today\'s Round to see your trend</text>';
+  $("bodyChart").innerHTML = s + '</svg>';
+  // phases
+  var rt = realToday(), ph = $("bodyPhases"); ph.innerHTML = "";
+  TPH.forEach(function(p){ var now = rt >= p.from && rt <= p.to; ph.appendChild(el("div","mini", '<span class="dot" style="background:' + (now ? "#facc15" : "#fff") + '"></span><div class="c2"><div style="font-weight:900">' + esc(p.name) + (now ? " (you are here)" : "") + '</div><div class="dt">' + short(p.from) + ' - ' + short(p.to) + ' · ' + esc(p.note) + '</div></div>')); });
+}
+function renderLibrary(){
+  var lib = $("lib"); lib.innerHTML = "";
+  LIBRARY.forEach(function(cat){
+    var c = el("div","card"), h = '<div class="h">' + esc(cat[0]) + '</div><ul>';
+    cat[1].forEach(function(it){ h += '<li><a href="' + esc(it[1]) + '" target="_blank" rel="noopener">' + esc(it[0]) + '</a><br><span>' + esc(it[2]) + '</span></li>'; });
+    c.innerHTML = h + '</ul>'; lib.appendChild(c);
+  });
+}
+function renderShop(){
+  $("wallet").textContent = coins() + " coins";
+  var rw = $("rewards"); rw.innerHTML = "";
+  (S.rewards || []).forEach(function(r){
+    var row = el("div","reward", '<span class="rn">' + esc(r.name) + '</span><span class="coin">' + r.cost + ' c</span>');
+    var buy = el("button","btn sm go","Redeem");
+    buy.onclick = function(){ if (coins() < r.cost) { toast("Not enough coins yet. " + (r.cost - coins()) + " to go."); blip([200]); return; } S.redeemed.push({ id: "x" + Date.now(), name:r.name, cost:r.cost, date: realToday() }); save(); toast("Redeemed: " + r.name + ". You earned it."); confetti(); blip([523,659,784]); renderAll(); };
+    var del = el("button","btn sm","Remove"); del.onclick = function(){ S.rewards = S.rewards.filter(function(x){ return x.id !== r.id; }); S.rmRewards = (S.rmRewards || []).concat([r.id]); save(); renderShop(); };
+    row.appendChild(buy); row.appendChild(del); rw.appendChild(row);
+  });
+  var rd = $("redeemed"); rd.innerHTML = "";
+  if (!S.redeemed.length) rd.innerHTML = '<div class="hint">Nothing yet. Go earn something nice.</div>';
+  S.redeemed.slice().reverse().forEach(function(x){ rd.appendChild(el("div","mini", '<div class="c2"><div style="font-weight:800">' + esc(x.name) + '</div><div class="dt">' + short(x.date) + ' · ' + x.cost + ' coins</div></div>')); });
+}
+function renderSave(){ $("nameIn").value = S.name || ""; $("soundIn").checked = !!S.sound; renderSync(); }
+
+// =====================================================================
+// NAV + WIRING
+// =====================================================================
+function switchTab(name){
+  tab = name;
+  document.querySelectorAll("#nav button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-tab") === name); });
+  ["today","map","arena","score","trophies","body","library","shop","save"].forEach(function(n){ $("tab-" + n).classList.toggle("hidden", n !== name); });
+  if (name === "score") weekAnchor = sel;
+  renderAll();
+  try { window.scrollTo(0, 0); } catch(e) {}
+}
+function renderAll(){
+  renderHUD();
+  if (tab === "today") renderToday();
+  if (tab === "map") renderMap();
+  if (tab === "arena") renderArena();
+  if (tab === "score") renderScore();
+  if (tab === "trophies") renderTrophies();
+  if (tab === "library") renderLibrary();
+  if (tab === "shop") renderShop();
+  if (tab === "save") renderSave();
+  if (tab === "body") renderBody();
+}
+document.querySelectorAll("#nav button").forEach(function(b){ b.onclick = function(){ switchTab(b.getAttribute("data-tab")); }; });
+$("prevDay").onclick = function(){ var i = DATES.indexOf(sel); if (i > 0) { sel = DATES[i-1]; renderAll(); } };
+$("nextDay").onclick = function(){ var i = DATES.indexOf(sel); if (i < DATES.length-1) { sel = DATES[i+1]; renderAll(); } };
+$("goToday").onclick = function(){ sel = clampDate(realToday()); renderAll(); };
+$("prevWeek").onclick = function(){ weekAnchor = iso(addDays(parseIso(weekAnchor), -7)); renderScore(); };
+$("nextWeek").onclick = function(){ weekAnchor = iso(addDays(parseIso(weekAnchor), 7)); renderScore(); };
+$("mapFind").onclick = function(){ var b = document.getElementById("ball"); if (b && b.scrollIntoView) b.scrollIntoView({ behavior:"smooth", block:"center" }); };
+document.querySelectorAll(".trow [data-min]").forEach(function(b){ b.onclick = function(){ setTimer(+b.getAttribute("data-min"), $("tLabel").textContent); }; });
+$("tStart").onclick = function(){ if (tRun) { clearInterval(tRun); tRun = null; this.textContent = "Resume"; } else { tRun = setInterval(tick, 1000); this.textContent = "Pause"; blip([523]); } };
+$("tReset").onclick = function(){ setTimer(50, "Hit Focus on any quest"); document.title = "Escape Velocity"; };
+$("rAdd").onclick = function(){ var n = $("rName").value.trim(), c = parseInt($("rCost").value, 10); if (!n || !(c > 0)) { toast("Give it a name and a cost"); return; } S.rewards.push({ id: "r" + Date.now(), name: n, cost: c }); $("rName").value = ""; $("rCost").value = ""; save(); renderShop(); };
+$("bExport").onclick = function(){ $("bText").value = JSON.stringify(S); try { $("bText").select(); } catch(e) {} toast("Save shown below. Copy it somewhere safe."); };
+$("bImport").onclick = function(){ try { var s = JSON.parse($("bText").value); if (!s || typeof s.done !== "object") throw new Error("bad"); var f = freshState(); Object.keys(f).forEach(function(k){ if (s[k] === undefined) s[k] = f[k]; }); S = s; save(); renderAll(); toast("Save loaded"); } catch(e) { toast("That doesn't look like a valid save"); } };
+$("bReset").onclick = function(){ if (confirm("Erase all progress, logs and coins? This can't be undone.")) { S = freshState(); save(); renderAll(); toast("New game started"); } };
+$("nameIn").oninput = function(){ S.name = this.value || "Player 1"; S.metaTs = Date.now(); save(); renderHUD(); };
+$("soundIn").onchange = function(){ S.sound = this.checked; S.metaTs = Date.now(); save(); };
+
+// =====================================================================
+// CLOUD SYNC (private GitHub Gist) + WIDGET FEED
+// =====================================================================
+var SKEY = "escape-velocity-sync";
+function loadCfg(){ try { return JSON.parse(localStorage.getItem(SKEY) || "{}"); } catch(e) { return {}; } }
+function saveCfg(c){ try { localStorage.setItem(SKEY, JSON.stringify(c)); } catch(e) {} }
+var CFG = loadCfg(), syncTimer = null, syncing = false, syncAgain = false;
+function setSyncStatus(msg){ var e = document.getElementById("syncStatus"); if (e) e.textContent = msg; CFG.lastMsg = msg; }
+function gh(method, path, body){
+  return fetch("https://api.github.com" + path, {
+    method: method,
+    headers: { "Authorization": "Bearer " + CFG.token, "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+    body: body ? JSON.stringify(body) : undefined
+  }).then(function(r){ if (!r.ok) return r.text().then(function(t){ throw new Error(r.status + " " + t.slice(0, 140)); }); return r.json(); });
+}
+function fileContent(f){ if (!f) return Promise.resolve(null); if (!f.truncated) return Promise.resolve(f.content); return fetch(f.raw_url).then(function(r){ return r.text(); }); }
+function redeemedKey(x){ return x.id || (x.name + "|" + x.date + "|" + x.cost); }
+function mergeState(L, R){
+  var out = JSON.parse(JSON.stringify(L));
+  out.ts = out.ts || {}; out.logTs = out.logTs || {};
+  var Rts = R.ts || {}, Rlt = R.logTs || {};
+  var ids = {}; [L.done || {}, R.done || {}, L.ts || {}, Rts].forEach(function(m){ Object.keys(m).forEach(function(k){ ids[k] = 1; }); });
+  Object.keys(ids).forEach(function(id){
+    var lt = (L.ts || {})[id] || 0, rt = Rts[id] || 0;
+    if (lt === 0 && rt === 0) { if (!out.done[id] && R.done && R.done[id]) out.done[id] = R.done[id]; return; }
+    if (rt > lt) { if (R.done && R.done[id]) out.done[id] = R.done[id]; else delete out.done[id]; out.ts[id] = rt; }
+  });
+  var dates = {}; [L.notes || {}, R.notes || {}, L.log || {}, R.log || {}].forEach(function(m){ Object.keys(m).forEach(function(k){ dates[k] = 1; }); });
+  Object.keys(dates).forEach(function(d){
+    var lt = (L.logTs || {})[d] || 0, rt = Rlt[d] || 0;
+    var takeR = rt > lt || (lt === 0 && rt === 0 && !(L.notes || {})[d] && !(L.log || {})[d]);
+    if (takeR) { if (R.notes && R.notes[d] !== undefined) out.notes[d] = R.notes[d]; if (R.log && R.log[d]) out.log[d] = R.log[d]; if (rt) out.logTs[d] = rt; }
+  });
+  var seen = {}; out.redeemed = [];
+  (L.redeemed || []).concat(R.redeemed || []).forEach(function(x){ var k = redeemedKey(x); if (!seen[k]) { seen[k] = 1; out.redeemed.push(x); } });
+  var rm = {}; (L.rmRewards || []).concat(R.rmRewards || []).forEach(function(id){ rm[id] = 1; });
+  out.rmRewards = Object.keys(rm);
+  var rw = {}; out.rewards = [];
+  (L.rewards || []).concat(R.rewards || []).forEach(function(x){ if (!rw[x.id] && !rm[x.id]) { rw[x.id] = 1; out.rewards.push(x); } });
+  if ((R.metaTs || 0) > (L.metaTs || 0)) { out.name = R.name; out.sound = R.sound; out.metaTs = R.metaTs; }
+  return out;
+}
+function buildWidget(){
+  var rt = realToday(), L = levelInfo(totalXP()), days = {};
+  DATES.forEach(function(ds, i){
+    var st = dayStats(ds), q = PLAN[ds].map(function(t){ return [TRACKS[t.track].name, t.t, !!S.done[t.id], t.xp, !!t.boss]; });
+    var done = q.filter(function(x){ return x[2]; }).length;
+    var text = "Hole " + (i+1) + " · " + done + "/" + q.length + " done · " + Math.round(st.pct*100) + "%\n" +
+      q.map(function(x){ var t = x[1].length > 46 ? x[1].slice(0, 45) + "…" : x[1]; return (x[2] ? "✓ " : "○ ") + t; }).join("\n");
+    days["d" + ds.replace(/-/g, "")] = { hole: i+1, date: nice(ds), pct: Math.round(st.pct*100), result: RES[result(ds)].label, text: text, quests: q };
+  });
+  var nb = BOSSES.filter(function(b){ return !S.done[b.task.id]; })[0];
+  return { updated: new Date().toISOString(), name: S.name, level: L.n, title: L.title, xp: totalXP(), streak: currentStreak(), coins: coins(),
+    score: fmtScore(courseScore()), nextBoss: nb ? { name: BOSS_META[nb.key].name, date: nb.task.date, quest: nb.task.t } : null, days: days };
+}
+function payload(){ return { files: { "state.json": { content: JSON.stringify(S) }, "widget.json": { content: JSON.stringify(buildWidget()) } } }; }
+function syncNow(manual){
+  if (!CFG.token || !CFG.gistId) { if (manual) toast("Connect sync first (Save Slot tab)"); return Promise.resolve(); }
+  if (syncing) { syncAgain = true; return Promise.resolve(); }
+  syncing = true; setSyncStatus("Syncing…");
+  return gh("GET", "/gists/" + CFG.gistId).then(function(g){
+    if (g.owner && g.owner.login) CFG.owner = g.owner.login;
+    return fileContent(g.files["state.json"]);
+  }).then(function(txt){
+    if (txt) { var R = JSON.parse(txt); S = mergeState(S, R); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+    return gh("PATCH", "/gists/" + CFG.gistId, payload());
+  }).then(function(){
+    CFG.last = Date.now(); saveCfg(CFG); setSyncStatus("Synced " + new Date().toLocaleTimeString());
+    if (manual) toast("Synced"); renderAll();
+  }).catch(function(e){ setSyncStatus("Sync failed: " + e.message); if (manual) toast("Sync failed, see Save Slot"); })
+  .then(function(){ syncing = false; if (syncAgain) { syncAgain = false; scheduleSync(); } });
+}
+function scheduleSync(){ if (!CFG.token || !CFG.gistId) return; clearTimeout(syncTimer); syncTimer = setTimeout(function(){ syncNow(false); }, 4000); }
+function widgetLinks(){
+  if (!CFG.gistId) return "";
+  var base = location.href.replace(/[#?].*$/, "").replace(/index\.html$/, "").replace(/\/?$/, "/");
+  var w = base + "widget.html?gist=" + CFG.gistId;
+  var raw = CFG.owner ? "https://gist.githubusercontent.com/" + CFG.owner + "/" + CFG.gistId + "/raw/widget.json" : "(sync once to get this)";
+  return '<div class="hint" style="margin-top:10px"><b>Widget page</b> (paste into WebsiteWidget / AnyWidget):<br><a href="' + esc(w) + '" target="_blank" rel="noopener">' + esc(w) + '</a><br><br><b>Raw widget data</b> (for KWGT):<br><code style="word-break:break-all">' + esc(raw) + '</code></div>';
+}
+function renderSync(){
+  var box = document.getElementById("syncBox"); if (!box) return;
+  var connected = !!(CFG.token && CFG.gistId);
+  box.innerHTML =
+    '<div class="hint" style="margin-bottom:8px">Status: <b id="syncStatus">' + esc(connected ? (CFG.lastMsg || "Connected") : "Not connected") + '</b></div>' +
+    '<label class="hint">GitHub token (fine-grained, only "Gists: read and write")</label>' +
+    '<input type="password" id="syncToken" placeholder="github_pat_…" style="margin-bottom:8px" value="' + esc(CFG.token || "") + '">' +
+    '<label class="hint">Gist ID (leave empty on your first device)</label>' +
+    '<input type="text" id="syncGist" placeholder="e.g. 3f1c9a…" style="margin-bottom:10px" value="' + esc(CFG.gistId || "") + '">' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      '<button class="btn go" id="syncConnect">' + (connected ? "Save settings" : "Connect") + '</button>' +
+      '<button class="btn" id="syncNowBtn">Sync now</button>' +
+      '<button class="btn red" id="syncOff">Disconnect this device</button>' +
+    '</div>' + widgetLinks() +
+    '<div class="hint" style="margin-top:10px">Your token stays on this device only; it is never written to the gist. The gist is secret (unlisted), but anyone with its link can read your progress, notes and weight.</div>';
+  document.getElementById("syncConnect").onclick = function(){
+    CFG.token = document.getElementById("syncToken").value.trim();
+    CFG.gistId = document.getElementById("syncGist").value.trim();
+    if (!CFG.token) { toast("Paste your token first"); return; }
+    if (CFG.gistId) { saveCfg(CFG); syncNow(true).then(renderSync); return; }
+    setSyncStatus("Creating your save…");
+    gh("POST", "/gists", { description: "Escape Velocity save", public: false, files: payload().files }).then(function(g){
+      CFG.gistId = g.id; CFG.owner = g.owner && g.owner.login; CFG.last = Date.now(); saveCfg(CFG);
+      toast("Cloud save created. Copy the Gist ID to your other devices."); setSyncStatus("Synced " + new Date().toLocaleTimeString()); renderSync();
+    }).catch(function(e){ setSyncStatus("Failed: " + e.message); toast("Could not create the gist, check the token"); });
+  };
+  document.getElementById("syncNowBtn").onclick = function(){ syncNow(true).then(renderSync); };
+  document.getElementById("syncOff").onclick = function(){ if (confirm("Remove the token and gist link from this device? Your data stays in the gist.")) { CFG = {}; saveCfg(CFG); renderSync(); } };
+}
+document.addEventListener("visibilitychange", function(){ if (document.visibilityState === "visible") syncNow(false); });
+if ("serviceWorker" in navigator && location.protocol === "https:") { try { navigator.serviceWorker.register("sw.js"); } catch(e) {} }
+
+renderAll();
+if (CFG.token && CFG.gistId) syncNow(false);
+window.__EV = { switchTab: switchTab, counts: { days: DATES.length, quests: ALL.length, sides: SIDEALL.length, bosses: BOSSES.length } };
+console.log("Escape Velocity v2 loaded:", DATES.length, "holes,", ALL.length, "main quests,", SIDEALL.length, "side quests,", BOSSES.length, "bosses");
+})();
+</script>
+</body>
+</html>
