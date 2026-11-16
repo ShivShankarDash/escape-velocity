@@ -487,21 +487,21 @@ function I(t, d, l, boss){ return { t:t, d:d || "", l:l || "", boss:!!boss }; }
 
 var PHASES = {
   sd: [
-    { id:"fund", name:"Fundamentals", from:"2026-11-23", to:"2026-12-20" },
-    { id:"pat",  name:"Patterns", from:"2026-12-21", to:"2027-01-17" },
+    { id:"fund", name:"Fundamentals (gaps only)", from:"2026-11-23", to:"2026-12-06" },
+    { id:"pat",  name:"Patterns + your systems", from:"2026-12-07", to:"2027-01-17" },
     { id:"prob", name:"Problems + mocks", from:"2027-01-18", to:"2027-03-14" }
   ],
   ai: [
-    { id:"p1", name:"P1 LLM internals", from:"2026-11-23", to:"2026-12-20" },
-    { id:"p2", name:"P2 Inference", from:"2026-12-21", to:"2027-01-03" },
-    { id:"p3", name:"P3 LLM gateway", from:"2027-01-04", to:"2027-01-17" },
-    { id:"p4", name:"P4 Production RAG", from:"2027-01-18", to:"2027-02-07" },
-    { id:"p5", name:"P5 Agents", from:"2027-02-08", to:"2027-02-28" },
-    { id:"p6", name:"P6 Fine-tuning", from:"2027-03-01", to:"2027-03-14" }
+    { id:"p1", name:"P1 LLM internals", from:"2026-11-23", to:"2026-12-13" },
+    { id:"p2", name:"P2 Inference", from:"2026-12-14", to:"2026-12-27" },
+    { id:"p3", name:"Flagship: gateway", from:"2026-12-28", to:"2027-01-17" },
+    { id:"p4", name:"Flagship: RAG", from:"2027-01-18", to:"2027-02-07" },
+    { id:"p5", name:"Flagship: agents", from:"2027-02-08", to:"2027-02-28" },
+    { id:"p6", name:"Warden: fine-tuned guard", from:"2027-03-01", to:"2027-03-14" }
   ],
   cc: [
-    { id:"redis", name:"Redis", from:"2026-11-23", to:"2027-01-10" },
-    { id:"kafka", name:"Kafka", from:"2027-01-11", to:"2027-03-14" }
+    { id:"redis", name:"Redis (Go)", from:"2026-11-23", to:"2026-12-31" },
+    { id:"kafka", name:"Kafka (Go)", from:"2027-01-01", to:"2027-03-14" }
   ],
   lld: [
     { id:"pre", name:"Starts 21 Dec", from:"2026-11-23", to:"2026-12-20" },
@@ -509,11 +509,17 @@ var PHASES = {
     { id:"code", name:"Machine coding", from:"2027-01-11", to:"2027-03-14" }
   ],
   career: [
-    { id:"found", name:"Foundations", from:"2026-11-23", to:"2026-12-14" },
-    { id:"pipe", name:"Pipeline", from:"2026-12-15", to:"2027-01-17" },
+    { id:"found", name:"Foundations", from:"2026-11-23", to:"2026-12-13" },
+    { id:"pipe", name:"Pipeline", from:"2026-12-14", to:"2027-01-17" },
     { id:"intv", name:"Interview mode", from:"2027-01-18", to:"2027-03-14" }
   ]
 };
+
+// Weekly rhythm (full-time job): Mon-Thu ~2.5 h, Friday light + catch-up, Saturday build day, Sunday off.
+// The holiday week runs at half load, together with the first gym deload.
+var LIGHT_FROM = "2026-12-28", LIGHT_TO = "2027-01-03";
+function lightWeek(ds){ return ds >= LIGHT_FROM && ds <= LIGHT_TO; }
+var CATCHUP = "Light day, and your weekly catch-up slot: finish anything unticked from this week first.";
 
 var BOSS_META = {
   "sd-fund":   { name:"The Blank Page Wraith", lore:"Feeds on concepts you only half understood.", seed:11 },
@@ -655,84 +661,78 @@ var X = {
 
 // ---------- quest content ----------
 var SD_LEARN = "Learn it, explain it out loud from a blank page, then write a half-page note in your own words. Done when you could teach it.";
+var SD_GAPS = "You've used most of this in production. Explain each topic out loud from a blank page first; only study the parts you stumble on, then write a half-page note on those.";
 var SD_PROB = "45 min out loud: requirements, estimates, API, data model, high-level design, deep dives, then what fails and how you'd monitor and deploy it. Compare with the reference and note your 3 biggest gaps.";
+var SD_OWN = "Present it like an interview answer, out loud: the problem and its scale, the design you shipped, the trade-offs, what broke, and what you'd change today. Draw the diagram and write a 1-page doc for your private interview folder (no company data in public repos).";
+var FLAGSHIP = "Flagship standard: it lives in the one platform repo, runs in Docker, has tests passing in CI, and is deployed to your live URL.";
 var Q = {
   "sd-fund-wk": [
-    I("The delivery framework: how to run a 45-min design interview", SD_LEARN, [X.hiDelivery, X.hiIntro]),
-    I("Networking: TCP vs UDP, HTTP/1.1 vs 2 vs 3, DNS, TLS", SD_LEARN, [core("networking-essentials","Networking Essentials"), X.hpbnTcp, X.hpbnTls, X.hpbnH2]),
-    I("Load balancers & proxies: L4 vs L7, algorithms, health checks", SD_LEARN, [X.samLB, core("networking-essentials","Networking Essentials (load balancing section)")]),
-    I("API design: REST, gRPC, GraphQL, pagination, idempotency keys", SD_LEARN, [core("api-design","API Design"), X.stripeIdem, X.gapi]),
-    I("Data modeling: SQL vs NoSQL, normalization, design from access patterns", SD_LEARN, [core("data-modeling","Data Modeling")]),
-    I("Database indexing: B-tree vs LSM, composite and covering indexes", SD_LEARN, [core("db-indexing","Database Indexing"), X.lukeAnatomy]),
-    I("Transactions & isolation levels: ACID, MVCC, read anomalies", SD_LEARN, [dd("postgres","PostgreSQL"), X.pgIso, X.jepsen]),
-    I("Caching: cache-aside, write-through/back, eviction, invalidation, stampedes", SD_LEARN, [core("caching","Caching"), X.awsCache, X.fbMemcache]),
-    I("Replication: leader-follower, multi-leader, leaderless quorums, replication lag", SD_LEARN, [X.pgHA, X.redisRepl, X.dynamo]),
-    I("Sharding: hash vs range, hot keys, resharding", SD_LEARN, [core("sharding","Sharding"), X.notion]),
-    I("Consistent hashing & virtual nodes", SD_LEARN, [core("consistent-hashing","Consistent Hashing"), X.dynamo]),
-    I("CAP, PACELC & consistency models (strong, eventual, read-your-writes)", SD_LEARN, [core("cap-theorem","CAP Theorem"), X.klepp, X.jepsen]),
-    I("Queues & streams: SQS vs Kafka, delivery guarantees, DLQs, backpressure", SD_LEARN, [dd("kafka","Kafka"), X.kafkaDesign, X.sqsDlq]),
-    I("Blob storage & CDNs: S3, presigned URLs, multipart upload, edge caching", SD_LEARN, [patt("large-blobs","Handling Large Blobs"), X.cdn, X.magic]),
-    I("Real-time: polling, long polling, SSE, WebSockets, pub/sub fan-out", SD_LEARN, [patt("realtime-updates","Real-time Updates"), X.slack]),
-    I("Search & geo: inverted index, Elasticsearch basics, geohash/quadtree", SD_LEARN, [dd("elasticsearch","Elasticsearch"), dd("proximity-search","Proximity Search"), X.h3]),
+    I("Diagnostic: blank-page test on the 17 fundamentals + the delivery framework", "60 min, no notes. Spend 2-3 min per topic out loud and mark each one solid, shaky or blank. The next 7 sessions only cover what you marked shaky or blank.", [X.hiDelivery, X.hiIntro, X.hiCore]),
+    I("Gaps: networking, load balancers, API design", SD_GAPS, [core("networking-essentials","Networking Essentials"), X.samLB, core("api-design","API Design"), X.stripeIdem, X.hpbnTls]),
+    I("Gaps: data modeling, indexing, transactions & isolation", SD_GAPS, [core("data-modeling","Data Modeling"), core("db-indexing","Database Indexing"), X.lukeAnatomy, X.pgIso, X.jepsen]),
+    I("Gaps: caching + replication", SD_GAPS, [core("caching","Caching"), X.awsCache, X.fbMemcache, X.pgHA, X.dynamo]),
+    I("Gaps: sharding, consistent hashing, CAP & consistency models", SD_GAPS, [core("sharding","Sharding"), core("consistent-hashing","Consistent Hashing"), core("cap-theorem","CAP Theorem"), X.klepp, X.notion]),
+    I("Gaps: queues & streams, blob storage & CDNs", SD_GAPS, [dd("kafka","Kafka"), X.kafkaDesign, X.sqsDlq, patt("large-blobs","Handling Large Blobs"), X.cdn]),
+    I("Gaps: real-time delivery, search & geo", SD_GAPS, [patt("realtime-updates","Real-time Updates"), X.slack, dd("elasticsearch","Elasticsearch"), dd("proximity-search","Proximity Search"), X.h3]),
     I("Numbers to know & back-of-envelope estimation", SD_LEARN, [core("numbers-to-know","Numbers to Know"), X.latency])
+  ],
+  "sd-fund-fri": [
+    I("Spaced recall: rebuild this week's topics from a blank page", CATCHUP + "\nNo notes open. Write every concept from this week, then check what you missed.", [X.hiCore]),
+    I("Flashcards: turn every gap from the last two weeks into a one-line card", CATCHUP, [X.hiCore, X.hiTech])
   ],
   "sd-fund-sat": [
     I("Out loud: Design a URL shortener (Bitly)", SD_PROB, [pb("bitly","Bitly")]),
-    I("Out loud: Design a notification system", SD_PROB, [pb("notification-system","Notification System")]),
-    I("Out loud: Design online chess", SD_PROB, [pb("online-chess","Online Chess")]),
-    I("Out loud: Design a price tracker (camelcamelcamel)", SD_PROB, [pb("camelcamelcamel","Price Tracking Service")])
-  ],
-  "sd-fund-sun": [
-    I("Spaced recall: rebuild this week's topics from a blank page", "No notes open. Write every concept from this week, then check what you missed. Re-learn only the gaps.", [X.hiDelivery, core("networking-essentials","Networking Essentials")]),
-    I("Spaced recall + flashcards for weeks 1-2", "Turn every gap into a one-line flashcard. Review the deck in 20 minutes.", [core("api-design","API Design"), core("data-modeling","Data Modeling"), core("db-indexing","Database Indexing")]),
-    I("Spaced recall: draw replication, sharding and caching on one diagram", "One system, all three ideas, explained out loud in 10 minutes.", [core("caching","Caching"), core("sharding","Sharding"), core("consistent-hashing","Consistent Hashing")]),
-    I("BOSS: Blank-page test on all 17 fundamentals", "60 minutes, no notes. Explain each fundamental in 2-3 minutes out loud. Anything you stumble on goes back into next week.", [X.hiCore], true)
+    I("BOSS: Blank-page test on all 17 fundamentals", "60 minutes, no notes. Explain each fundamental in 2-3 minutes out loud. Compare with your diagnostic from week 1; anything still shaky goes on a flashcard.", [X.hiCore], true)
   ],
   "sd-pat-wk": [
     I("Pattern: Scaling reads (replicas, cache layers, CDN)", SD_LEARN, [patt("scaling-reads","Scaling Reads"), X.twitter]),
     I("Problem: Design a news aggregator (scaling reads applied)", SD_PROB, [pb("google-news","News Aggregator")]),
     I("Pattern: Scaling writes (sharding, batching, write-behind)", SD_LEARN, [patt("scaling-writes","Scaling Writes"), X.discord]),
+    I("Your system: Daikin fault-notification dedup (~800M Lambda invocations/month)", SD_OWN + " Cover the dedup key, idempotency, the 24-hour suppression window and the serial-number single source of truth.", [X.stripeIdem, X.sqsDlq]),
     I("Problem: Design an ad click aggregator", SD_PROB, [pb("ad-click-aggregator","Ad Click Aggregator"), dd("flink","Flink")]),
     I("Rate limiting algorithms + Design a distributed rate limiter", "Token bucket, leaky bucket, sliding window. Then design it for many servers. " + SD_PROB, [pb("distributed-rate-limiter","Rate Limiter"), X.stripeRL]),
     I("Pattern: Real-time updates (WebSockets at scale, pub/sub, presence)", SD_LEARN, [patt("realtime-updates","Real-time Updates"), X.slack]),
+    I("Your system: incidents export, 60 s to 3 s with chunked streaming", SD_OWN + " Cover why it was slow, streaming vs building the file, memory limits, and what happens at 10x the data.", [patt("large-blobs","Handling Large Blobs")]),
     I("Problem: Design WhatsApp", SD_PROB, [pb("whatsapp","WhatsApp"), wild("discord-messages-scylladb","Discord message storage")]),
     I("Pattern: Dealing with contention (locks, optimistic concurrency, reservations)", SD_LEARN, [patt("dealing-with-contention","Dealing with Contention"), wild("shopify-inventory-reservations","Shopify inventory reservations")]),
     I("Problem: Design Ticketmaster", SD_PROB, [pb("ticketmaster","Ticketmaster")]),
     I("Idempotency, outbox pattern, sagas, and why exactly-once is mostly a myth", SD_LEARN, [X.stripeIdem, X.outbox, X.saga, dd("change-data-capture","Change Data Capture")]),
+    I("Your system: Coding Ninjas contests + rewards at 2M users / 45k DAU", SD_OWN + " Cover contest start spikes, leaderboards, the weekly problem algorithm and how rewards stayed consistent.", [patt("scaling-reads","Scaling Reads"), patt("dealing-with-contention","Dealing with Contention")]),
     I("Pattern: Multi-step processes (workflows, orchestration vs choreography)", SD_LEARN, [patt("multi-step-processes","Multi-step Processes"), dd("temporal","Temporal")]),
     I("Problem: Design a payment system", SD_PROB, [pb("payment-system","Payment System"), X.airbnb]),
-    I("Pattern: Handling large blobs (presigned uploads, chunking, resumable)", SD_LEARN, [patt("large-blobs","Handling Large Blobs"), X.magic]),
-    I("Problem: Design Dropbox", SD_PROB, [pb("dropbox","Dropbox")]),
+    I("Problem: Design Dropbox", SD_PROB, [pb("dropbox","Dropbox"), patt("large-blobs","Handling Large Blobs")]),
     I("Pattern: Long-running tasks (job queues, workers, retries, scheduling)", SD_LEARN, [patt("long-running-tasks","Managing Long Running Tasks"), wild("slack-job-queue","Slack job queue")]),
-    I("Problem: Design a web crawler", SD_PROB, [pb("web-crawler","Web Crawler")]),
-    I("Pattern: Proximity-based services (geohash, quadtrees, PostGIS)", SD_LEARN, [dd("proximity-search","Proximity Search"), X.h3]),
-    I("Problem: Design Uber", SD_PROB, [pb("uber","Uber")]),
+    I("Your system: the Bedrock multi-source feedback classifier, as an AI system design", SD_OWN + " Cover ingestion from stores and Zendesk, classification cost and accuracy, how you'd evaluate it, and how you'd scale it to every product line.", [X.hamel]),
+    I("Problem: Design Uber", SD_PROB, [pb("uber","Uber"), dd("proximity-search","Proximity Search")]),
     I("Observability & SLOs: metrics, logs, traces, alerting, error budgets", SD_LEARN, [X.sreSlo, X.sreMon, X.prom]),
     I("Security for design rounds: authN/Z, OAuth/OIDC, JWT vs sessions, multi-tenancy", SD_LEARN, [X.oauth, X.jwt])
+  ],
+  "sd-pat-fri": [
+    I("Light reading: Redis + Postgres deep dives", CATCHUP + "\nWrite 5 'when I'd pick it / when I wouldn't' bullets for each.", [dd("redis","Redis"), dd("postgres","PostgreSQL")]),
+    I("Light reading: Kafka deep dive", CATCHUP + "\nPartitions, consumer groups, retention, ordering. Connect it to what you're building.", [dd("kafka","Kafka"), X.kafkaDesign]),
+    I("Light reading: DynamoDB & Cassandra", CATCHUP + "\nPartition keys, LSM trees, tunable consistency. When NoSQL wins.", [dd("dynamodb","DynamoDB"), dd("cassandra","Cassandra")]),
+    I("Spaced recall: draw every pattern so far on one page", CATCHUP, [X.hiCore]),
+    I("Flashcards: patterns and your-system trade-offs", CATCHUP, [X.hiCore, X.hiTech])
   ],
   "sd-pat-sat": [
     I("Out loud: Design Facebook Live Comments", SD_PROB, [pb("fb-live-comments","FB Live Comments")]),
     I("Out loud: Design an online auction", SD_PROB, [pb("online-auction","Online Auction")]),
     I("Out loud: Design YouTube", SD_PROB, [pb("youtube","YouTube")]),
-    I("Out loud: Design Yelp", SD_PROB, [pb("yelp","Yelp")])
-  ],
-  "sd-pat-sun": [
-    I("Deep dive: Redis + Postgres internals", "Read both deep dives. Write 5 'when I'd pick it / when I wouldn't' bullets for each.", [dd("redis","Redis"), dd("postgres","PostgreSQL")]),
-    I("Deep dive: Kafka", "Partitions, consumer groups, retention, ordering guarantees. Connect it to what you're building in CodeCrafters.", [dd("kafka","Kafka"), X.kafkaDesign]),
-    I("Deep dive: DynamoDB & Cassandra", "Partition keys, LSM trees, tunable consistency. When NoSQL wins.", [dd("dynamodb","DynamoDB"), dd("cassandra","Cassandra"), X.dynamo]),
+    I("Out loud: Design Yelp", SD_PROB, [pb("yelp","Yelp")]),
     I("BOSS: Cold mock - Design Uber in 45 min, recorded", "No notes, timer on, record yourself. Watch it back and list 5 improvements.", [pb("uber","Uber (compare after)")], true)
   ],
   "sd-prob-q": [
     I("Out loud (cold redo): Ticketmaster", SD_PROB, [pb("ticketmaster","Ticketmaster")]),
     I("Out loud (cold redo): Uber", SD_PROB, [pb("uber","Uber")]),
+    I("Postgres lab 1: EXPLAIN ANALYZE on real data", "Load a million+ rows of your flagship's request logs. Find the slow queries, read the plans, add composite and covering indexes, and record before/after timings.", [X.lukeAnatomy, dd("postgres","PostgreSQL")]),
     I("Out loud (cold redo): WhatsApp", SD_PROB, [pb("whatsapp","WhatsApp")]),
     I("Out loud (cold redo): Dropbox", SD_PROB, [pb("dropbox","Dropbox")]),
     I("Out loud: Instagram", SD_PROB, [pb("instagram","Instagram"), X.insta]),
     I("Out loud: Facebook News Feed", SD_PROB, [pb("fb-news-feed","FB News Feed"), X.twitter]),
     I("Out loud: Tinder", SD_PROB, [pb("tinder","Tinder")]),
-    I("Out loud: Strava", SD_PROB, [pb("strava","Strava")]),
     I("Out loud: Robinhood", SD_PROB, [pb("robinhood","Robinhood")]),
     I("Out loud: Distributed job scheduler", SD_PROB, [pb("job-scheduler","Job Scheduler")]),
+    I("Postgres lab 2: transactions and locking in practice", "Reproduce a lost update and a write-skew anomaly, fix them with SELECT ... FOR UPDATE and with optimistic versioning, cause a deadlock on purpose, then put PgBouncer in front and watch connection counts.", [X.pgIso, patt("dealing-with-contention","Dealing with Contention")]),
     I("Out loud: Metrics monitoring system", SD_PROB, [pb("metrics-monitoring","Metrics Monitoring"), dd("time-series-databases","Time Series Databases")]),
     I("Out loud: Distributed cache", SD_PROB, [pb("distributed-cache","Distributed Cache"), X.fbMemcache]),
     I("Out loud: Facebook Post Search", SD_PROB, [pb("fb-post-search","FB Post Search")]),
@@ -740,16 +740,15 @@ var Q = {
     I("Out loud: Local delivery (Gopuff)", SD_PROB, [pb("gopuff","Local Delivery Service")]),
     I("Out loud: Google Docs", SD_PROB, [pb("google-docs","Google Docs"), wild("figma-multiplayer","Figma multiplayer")]),
     I("Out loud: LeetCode (online judge)", SD_PROB, [pb("leetcode","LeetCode")]),
+    I("Postgres lab 3: a zero-downtime migration on your flagship schema", "Add a column, backfill it in batches, build an index CONCURRENTLY, and switch reads over with expand-and-contract while a load test runs.", [dd("postgres","PostgreSQL")]),
     I("Out loud (cold redo): Payment system", SD_PROB, [pb("payment-system","Payment System")]),
-    I("Out loud (cold redo): Web crawler", SD_PROB, [pb("web-crawler","Web Crawler")]),
+    I("Out loud: Web crawler", SD_PROB, [pb("web-crawler","Web Crawler")]),
     I("Out loud (cold redo): Ad click aggregator", SD_PROB, [pb("ad-click-aggregator","Ad Click Aggregator")]),
     I("Out loud (cold redo): YouTube", SD_PROB, [pb("youtube","YouTube")]),
-    I("Out loud (cold redo): News aggregator", SD_PROB, [pb("google-news","News Aggregator")]),
-    I("Out loud (cold redo): Notification system", SD_PROB, [pb("notification-system","Notification System")]),
     I("Speed run: URL shortener in 30 minutes", "Same structure, half the time. Interviews reward a crisp first 15 minutes.", [pb("bitly","Bitly")])
   ],
   "sd-prob-aisd": [
-    I("AI system design: LLM gateway for 50 teams", "Routing, fallback, per-team budgets, caching, observability. Use what you built in P3. " + SD_PROB, [dd("api-gateway","API Gateway"), pb("distributed-rate-limiter","Rate Limiter")]),
+    I("AI system design: LLM gateway for 50 teams", "Routing, fallback, per-team budgets, caching, observability. Use what you built in the flagship. " + SD_PROB, [dd("api-gateway","API Gateway"), pb("distributed-rate-limiter","Rate Limiter")]),
     I("AI system design: RAG over 10M documents with permissions", "Ingestion, indexing, hybrid retrieval, ACLs, freshness, evals. " + SD_PROB, [dd("vector-databases","Vector Databases"), X.ctx]),
     I("AI system design: Agent platform (tools, memory, sandboxing)", "Loop, tool registry, memory, guardrails, cost limits, replay. " + SD_PROB, [X.agents, X.tools]),
     I("AI system design: Inference service for 10k concurrent users", "GPU capacity math, batching, autoscaling, TTFT SLOs. Use your P2 numbers. " + SD_PROB, [X.vllmBlog, fo("07-03","Continuous Batching")]),
@@ -759,130 +758,102 @@ var Q = {
     I("AI system design: Content moderation pipeline with LLMs", "Cheap classifiers first, LLM for hard cases, human review, appeals. " + SD_PROB, [X.pg2, X.owaspPI])
   ],
   "sd-prob-fri": [
-    I("Weak-spot review: redo this week's worst design from memory", "Pick the design you felt shakiest on. Redo only the parts you got wrong."),
-    I("Weak-spot review + rewrite one design doc cleanly", "A clean 1-page version you could paste into an interview follow-up.", [X.hiDelivery]),
-    I("Weak-spot review: estimation drills", "10 quick back-of-envelope estimates (QPS, storage, bandwidth) in 30 minutes.", [core("numbers-to-know","Numbers to Know"), X.latency]),
-    I("Weak-spot review: failure modes", "For 3 past designs, list what breaks first at 10x traffic and how you'd detect it.", [X.sreCascade]),
-    I("Weak-spot review: redo this week's worst design from memory", "Only the parts you got wrong."),
-    I("Weak-spot review: trade-off flashcards", "SQL vs NoSQL, push vs pull, sync vs async, cache vs no cache. One card each.", [X.hiCore, X.hiTech]),
-    I("Weak-spot review: redo this week's worst design from memory", "Only the parts you got wrong."),
-    I("Weak-spot review: your 3 best designs, polished", "These become your go-to examples in interviews.")
+    I("Weak-spot review: redo this week's worst design from memory", CATCHUP + "\nPick the design you felt shakiest on. Redo only the parts you got wrong."),
+    I("Weak-spot review + rewrite one design doc cleanly", CATCHUP + "\nA clean 1-page version you could paste into an interview follow-up.", [X.hiDelivery]),
+    I("Weak-spot review: estimation drills", CATCHUP + "\n10 quick back-of-envelope estimates (QPS, storage, bandwidth) in 30 minutes.", [core("numbers-to-know","Numbers to Know"), X.latency]),
+    I("Light reading: consensus and Raft in plain words", CATCHUP + "\nLeader election, log replication, why you need a majority. Connect it to the replication you built in Redis.", [X.raft, dd("zookeeper","ZooKeeper")]),
+    I("Weak-spot review: failure modes", CATCHUP + "\nFor 3 past designs, list what breaks first at 10x traffic and how you'd detect it.", [X.sreCascade]),
+    I("Weak-spot review: trade-off flashcards", CATCHUP + "\nSQL vs NoSQL, push vs pull, sync vs async, cache vs no cache. One card each.", [X.hiCore, X.hiTech]),
+    I("Weak-spot review: redo this week's worst design from memory", CATCHUP + "\nOnly the parts you got wrong."),
+    I("Weak-spot review: your 3 best designs, polished", CATCHUP + "\nThese become your go-to examples in interviews, next to your own systems.")
   ],
   "sd-prob-sat": [
     I("Mock interview #1 - system design (peer or paid)", "Recorded. After: write 3 things to fix."),
     I("Mock interview #2 - AI system design", "Recorded. After: write 3 things to fix."),
     I("Mock interview #3 - system design", "Recorded. After: write 3 things to fix."),
-    I("Mock interview #4 - system design", "Recorded. After: write 3 things to fix."),
+    I("Mock interview #4 - 'tell me about a system you built'", "Recorded. Your interviewer picks one of your four systems and digs in for 30 minutes."),
     I("Mock interview #5 - AI system design", "Recorded. After: write 3 things to fix."),
     I("Mock interview #6 - system design", "Recorded. After: write 3 things to fix."),
     I("Mock interview #7 - system design", "Recorded. After: write 3 things to fix."),
     I("BOSS: Final mock loop - 2 back-to-back design rounds", "Simulate a real onsite. If this goes well, you're ready.", "", true)
   ],
-  "sd-prob-sun": [
-    I("Deep dive refresh: Postgres", "Indexes, MVCC, replication, when it stops scaling.", [dd("postgres","PostgreSQL"), X.pgIso]),
-    I("Deep dive refresh: DynamoDB", "", [dd("dynamodb","DynamoDB")]),
-    I("Deep dive refresh: Cassandra", "", [dd("cassandra","Cassandra"), X.discord]),
-    I("Deep dive refresh: Kafka", "", [dd("kafka","Kafka")]),
-    I("Deep dive refresh: Redis", "", [dd("redis","Redis")]),
-    I("Deep dive refresh: Elasticsearch", "", [dd("elasticsearch","Elasticsearch")]),
-    I("Deep dive: ZooKeeper / consensus (Raft in plain words)", "", [dd("zookeeper","ZooKeeper"), X.raft]),
-    I("Deep dive: API gateways & CDNs", "", [dd("api-gateway","API Gateway"), X.cdn])
-  ],
   "ai-p1": [
     I("Setup Python + PyTorch; start the micrograd video", "Watch the first hour of the micrograd video. Type the code yourself.", [X.vMicro, X.pytorch, X.rMicro]),
-    I("BUILD: micrograd from scratch", "Finish the video. Write your own Value class and backprop without looking, then train a tiny neural net.", [X.vMicro, X.rMicro]),
-    I("makemore part 1: bigram language model", "Counting, sampling, the loss function. Type it yourself.", [X.vMM1, X.rMM]),
-    I("makemore part 2: MLP (first half)", "Embeddings, hidden layer, training loop.", [X.vMM2]),
-    I("makemore part 2: finish + experiments", "Change embedding size and learning rate; log what happens to loss.", [X.vMM2]),
-    I("BUILD: makemore part 3 (activations, BatchNorm)", "Then write a short note: why training goes unstable and what fixes it.", [X.vMM3]),
-    I("Let's build GPT: data, baseline, the self-attention trick", "First third of the video.", [X.vGPT, X.rNanoGPT]),
-    I("Let's build GPT: self-attention and multi-head attention", "Be able to explain Q, K, V on a whiteboard.", [X.vGPT, X.illus, X.attn]),
+    I("micrograd: finish the video", "Understand backprop well enough to explain it on a whiteboard.", [X.vMicro, X.rMicro]),
+    I("BUILD: micrograd from scratch + makemore part 1 (bigram model)", "Write your own Value class and backprop without looking and train a tiny net. Then the bigram model: counting, sampling, the loss function.", [X.vMicro, X.rMicro, X.vMM1, X.rMM]),
+    I("makemore part 2: MLP", "Embeddings, hidden layer, training loop. Change embedding size and learning rate; log what happens to loss.", [X.vMM2]),
+    I("makemore part 3: activations and BatchNorm", "Then a short note: why training goes unstable and what fixes it.", [X.vMM3]),
+    I("BUILD: Let's build GPT, data to multi-head attention", "First two thirds of the video. Be able to explain Q, K, V on a whiteboard.", [X.vGPT, X.rNanoGPT, X.illus, X.attn]),
     I("Let's build GPT: feed-forward, residuals, LayerNorm, scaling up", "Last third of the video.", [X.vGPT]),
-    I("BUILD: Project 1 - train your own tiny GPT", "Pick a corpus you care about. Train it, log loss curves, sample text.", [X.vGPT, X.rNanoGPT]),
-    I("Tokenizer video: how BPE works", "Why tokens explain cost, context limits and weird failures.", [X.vTok, X.rMinbpe]),
-    I("Implement BPE yourself: train, encode, decode", "Compare your tokenizer's output with minbpe's.", [X.rMinbpe, X.vTok]),
-    I("Add sampling to your GPT: temperature, top-k, top-p", "Generate with each setting and save examples side by side.", [X.hfGen]),
-    I("BOSS: Add a KV cache to your GPT + write-up", "Implement it, measure the speedup, publish 'What building a GPT taught me'. Optional: skim nanochat's code.", [fo("03-04","Build a KV Cache"), fo("03-01","Why generation recomputes work"), X.rNanochat], true)
+    I("Tokenizers: how BPE works, then implement it yourself", "Train, encode, decode. Compare your output with minbpe's.", [X.vTok, X.rMinbpe]),
+    I("BOSS: Project 1 - train your own tiny GPT, add sampling and a KV cache", "Pick a corpus you care about, train it and log loss curves. Add temperature/top-k/top-p, implement a KV cache, measure the speedup, and publish 'What building a GPT taught me'.", [X.rNanoGPT, X.hfGen, fo("03-04","Build a KV Cache")], true)
   ],
   "ai-p2": [
-    I("Inference basics: TTFT, TPOT, throughput, goodput", "", [fo("in-01","What is inference engineering"), fo("04-01","TTFT, TPOT, ITL, E2E & Throughput")]),
-    I("KV cache memory math; why decoding is memory-bound", "Calculate KV cache size for a 7B model at 8k context by hand.", [fo("00-01","Math for memory, throughput & speedups"), fo("12-07","Compute-bound vs memory-bound")]),
+    I("Inference basics + KV cache memory math", "TTFT, TPOT, throughput, goodput. Calculate KV cache size for a 7B model at 8k context by hand.", [fo("in-01","What is inference engineering"), fo("04-01","TTFT, TPOT, ITL, E2E & Throughput"), fo("00-01","Math for memory, throughput & speedups")]),
     I("Continuous batching & PagedAttention", "Read how vLLM does it. Draw it.", [fo("07-03","Continuous Batching"), fo("08-03","PagedAttention"), X.vllmBlog]),
-    I("BUILD: Serve a small open model, stream tokens over HTTP", "llama.cpp on your Mac or vLLM on a rented GPU.", [fo("01-03","Generate & stream your first tokens"), fo("01-05","Serve the model over HTTP"), X.llamaServer]),
+    I("BUILD: Serve a small open model, stream tokens over HTTP", "llama.cpp on your Mac or vLLM on a rented GPU. This becomes a provider in your flagship gateway.", [fo("01-03","Generate & stream your first tokens"), fo("01-05","Serve the model over HTTP"), X.llamaServer]),
     I("Quantization: FP16, FP8, INT8, 4-bit, AWQ/GPTQ trade-offs", "", [fo("11-02","BF16, FP8, INT8 & 4-bit inference"), fo("11-03","AWQ, GPTQ & SmoothQuant")]),
     I("Write a load test (k6 or Locust) measuring TTFT and TPOT", "Concurrency 1, 4, 16, 64.", [X.k6, fo("04-05","P50, P95, P99 & variance")]),
-    I("Benchmark: quantized vs full precision; chart the results", "", [fo("05-05","Find saturation, SLO failure & OOM boundaries")]),
-    I("BOSS: Project 2 report - capacity planning", "Answer: how many GPUs for 1,000 concurrent users at your latency target? Publish it.", [fo("04-06","Goodput, SLOs & failure rates")], true)
+    I("BOSS: Project 2 - benchmark + capacity-planning report", "Quantized vs full precision, charted. Then answer: how many GPUs for 1,000 concurrent users at your latency target? Publish it.", [fo("05-05","Find saturation, SLO failure & OOM boundaries"), fo("04-06","Goodput, SLOs & failure rates")], true)
   ],
   "ai-p3": [
-    I("Spec the LLM gateway (you write it)", "API, routing rules, budget model, data model, what you'll measure.", [dd("api-gateway","API Gateway"), X.openaiChat]),
-    I("Build an OpenAI-compatible proxy in Bun with streaming", "", [X.bunHttp, X.mdnSse, X.openaiChat]),
-    I("Multi-provider routing, fallback, retries with backoff, timeouts", "Include your own model server from P2 as a provider.", [X.backoff]),
-    I("BUILD: Per-team rate limiting (token bucket in Redis) + token budgets", "", [pb("distributed-rate-limiter","Rate Limiter"), X.stripeRL]),
-    I("Semantic cache: embed prompts, similarity threshold, measure hit rate", "", [X.gptcache, dd("vector-databases","Vector Databases")]),
-    I("Cost & latency tracking per request + OpenTelemetry traces", "", [X.otelJs, X.otelGenai]),
-    I("Plug Warden in as a pre-request guard; load-test the gateway", "", [X.k6]),
-    I("BOSS: Ship Project 3", "README with architecture diagram, numbers, 2-minute demo video.", "", true)
+    I("Flagship kickoff: choose the use case, name it, write the one-page spec", "Holiday week, keep it light. One real use case runs through all three layers (for example a support-insights assistant over public app reviews and docs). Spec the gateway API, routing rules, budget model and what you'll measure.", [X.agents, dd("api-gateway","API Gateway")]),
+    I("Flagship repo skeleton: Docker, tests, CI, deployed hello-world", "Set the production standard on day one: monorepo, Dockerfile, a test running in CI, deployed to a live URL, and an empty metrics dashboard.", [X.otelJs]),
+    I("Gateway: OpenAI-compatible proxy in Bun with streaming", FLAGSHIP, [X.bunHttp, X.mdnSse, X.openaiChat]),
+    I("Gateway: multi-provider routing, circuit breaker, retries with backoff, timeouts", FLAGSHIP + " Include your own model server from P2 as a provider. Your LLD round later redesigns this cleanly.", [X.backoff]),
+    I("BUILD: Gateway per-team rate limiting (token bucket in Redis) + token budgets", FLAGSHIP + " Your LLD round next week redesigns this cleanly.", [pb("distributed-rate-limiter","Rate Limiter"), X.stripeRL]),
+    I("Gateway: semantic cache - embed prompts, similarity threshold, measure hit rate", FLAGSHIP, [X.gptcache, dd("vector-databases","Vector Databases")]),
+    I("Gateway: cost & latency per request, OpenTelemetry traces, live dashboard", FLAGSHIP, [X.otelJs, X.otelGenai, X.prom]),
+    I("BOSS: Ship the gateway layer", "Warden plugged in as a pre-request guard, k6 load test results, deployed, README with architecture diagram and numbers (req/s, p95, cache hit rate), 2-minute demo video.", [X.k6], true)
   ],
   "ai-p4": [
-    I("Pick a document corpus; write 50 test questions with answers + source pages", "Include unanswerable questions, multi-document answers and outdated info.", [X.hamel]),
-    I("Eval harness: retrieval recall@k, answer correctness, faithfulness", "LLM-as-judge plus your own spot checks.", [X.ragas, X.hamel]),
-    I("Naive RAG baseline: chunk, embed, vector DB, top-k", "Record the baseline numbers. Expect them to be mediocre.", [X.ragWhat]),
-    I("BUILD: Smarter chunking (by headings, overlap) + metadata; measure", "", [X.chunk]),
-    I("Hybrid search: BM25 + vectors merged with Reciprocal Rank Fusion; measure", "", [X.ctx, X.rrf]),
-    I("Add a reranker; measure recall@5 and the latency cost", "", [X.rerank]),
-    I("Contextual retrieval: prefix each chunk with its document context; measure", "", [X.ctx]),
-    I("BUILD: Query side - rewriting, splitting multi-part questions, routing", "Measure on your hardest questions.", [X.qrewrite]),
-    I("The loop: draft, verify every claim against sources, re-search or abstain", "This is the step that separates engineers from tutorials.", [X.crag, X.selfrag]),
-    I("Citations per claim + 'I don't know' on unanswerable questions", "Measure how often it correctly refuses.", [X.selfrag]),
-    I("Production: permission-aware retrieval, injection scan of documents, incremental re-indexing", "", [dd("vector-databases","Vector Databases"), X.owaspPI]),
-    I("BOSS: Ship Project 4 with the improvement table", "Every step, what it improved, what it cost. Publish the write-up.", [X.hamel], true)
+    I("RAG: pick the corpus for your use case; write 50 test questions with answers + sources", "Include unanswerable questions, multi-document answers and outdated info.", [X.hamel]),
+    I("RAG: eval harness - retrieval recall@k, answer correctness, faithfulness", "LLM-as-judge plus your own spot checks. Runs in CI.", [X.ragas, X.hamel]),
+    I("BUILD: RAG baseline, then smarter chunking + metadata; measure both", FLAGSHIP + " All model calls go through your gateway. Record the baseline; expect it to be mediocre.", [X.ragWhat, X.chunk]),
+    I("RAG: hybrid search - BM25 + vectors merged with Reciprocal Rank Fusion; measure", "", [X.ctx, X.rrf]),
+    I("RAG: add a reranker; measure recall@5 and the latency cost", "", [X.rerank]),
+    I("BUILD: RAG contextual retrieval + query rewriting and routing; measure", "Prefix each chunk with its document context, then rewrite and split hard questions. Measure on your hardest questions.", [X.ctx, X.qrewrite]),
+    I("RAG: verify every claim, cite per claim, abstain with 'I don't know'", "Draft, check claims against sources, re-search or abstain. Measure how often it correctly refuses.", [X.crag, X.selfrag]),
+    I("RAG production: permission-aware retrieval, injection scan, incremental re-indexing", FLAGSHIP, [dd("vector-databases","Vector Databases"), X.owaspPI]),
+    I("BOSS: Ship the RAG layer with the improvement table", "Deployed behind the gateway. Every step, what it improved, what it cost. Publish the write-up.", [X.hamel], true)
   ],
   "ai-p5": [
-    I("Read 'Building Effective Agents'; spec your agent", "Workflow or agent? Write down why.", [X.agents]),
-    I("Tool use + intro to MCP", "", [X.toolUse, X.mcpIntro]),
-    I("Build the core loop: plan, act, observe; stop conditions; step & cost budget", "", [X.agents, X.tools]),
-    I("BUILD: 3-4 tools as MCP servers, wired into the loop", "", [X.mcpServer, X.tools]),
-    I("Error handling: tool failures, retries, timeouts, idempotent tools", "", [X.tools, X.backoff]),
-    I("Memory: plug in your Memory Layer; context compaction", "", [X.ctxEng, X.slackCtx]),
-    I("Write a task eval set: 20 tasks with success criteria", "", [X.agentEvals]),
-    I("BUILD: Eval runner - success rate, steps, cost, failure categories", "", [X.agentEvals, X.toolEvalCb]),
-    I("Guardrails: Warden on tool outputs, tool-call policy, human approval for risky actions", "", [X.trifecta, X.owaspPI]),
-    I("Tracing & replay of runs; debug the 3 worst failures", "", [X.otelGenai]),
-    I("Improve and re-run evals; compare before vs after", "", [X.hamel]),
-    I("BOSS: Ship Project 5", "Eval score before/after, demo video, write-up.", "", true)
+    I("Agents: read 'Building Effective Agents'; spec your agent", "Workflow or agent? Write down why. It calls your RAG layer as a tool, and every model call goes through the gateway.", [X.agents, X.toolUse, X.mcpIntro]),
+    I("Agents: core loop - plan, act, observe; stop conditions; step & cost budget", FLAGSHIP, [X.agents, X.tools]),
+    I("BUILD: 3-4 tools as MCP servers, discovered through your tool registry", FLAGSHIP + " Reuse the tool registry from LLD.", [X.mcpServer, X.tools]),
+    I("Agents: error handling - tool failures, retries, timeouts, idempotent tools", "", [X.tools, X.backoff]),
+    I("Agents: memory - plug in your Memory Layer; context compaction", "", [X.ctxEng, X.slackCtx]),
+    I("BUILD: Agent eval set (20 tasks) + eval runner", "Success rate, steps, cost, failure categories. Runs in CI.", [X.agentEvals, X.toolEvalCb]),
+    I("Agents: guardrails - Warden on tool outputs, tool-call policy, human approval for risky actions", "", [X.trifecta, X.owaspPI]),
+    I("Agents: tracing & replay; debug and fix the 3 worst failures", "", [X.otelGenai, X.hamel]),
+    I("BOSS: Ship the agent layer", "Deployed. Eval score before/after, demo video, write-up. The platform is complete.", "", true)
   ],
   "ai-p6": [
-    I("When to fine-tune vs prompt vs RAG; LoRA/QLoRA concepts", "", [X.peftLora, X.loraPaper, X.qloraPaper]),
-    I("Build the dataset from your Warden attack corpus: train/val/test, no leakage", "", [X.hamel]),
-    I("Baselines on the test set: big-model prompting and Prompt Guard", "", [X.pg2]),
+    I("Warden fine-tune: when to fine-tune vs prompt vs RAG; build the dataset", "LoRA/QLoRA concepts, then train/val/test splits from your Warden attack corpus with no leakage.", [X.peftLora, X.loraPaper, X.qloraPaper]),
+    I("Warden fine-tune: baselines - big-model prompting and Prompt Guard", "", [X.pg2]),
     I("BUILD: LoRA fine-tune a small open model; track loss", "Colab or a rented GPU.", [X.peftLora, X.trlSft]),
-    I("Evaluate: accuracy, false positives, latency, cost", "", [X.precRec]),
-    I("Error analysis + one improvement iteration", "", [X.hamel]),
-    I("Plug the fine-tuned classifier into Warden as a stage", "", [X.pg2onnx]),
-    I("BOSS: Project 6 write-up + update resume and portfolio", "3-way comparison table. Your AI story is complete.", "", true)
+    I("Warden fine-tune: evaluate (accuracy, false positives, latency, cost) + one improvement", "", [X.precRec, X.hamel]),
+    I("Warden: plug the fine-tuned classifier in as a stage", "", [X.pg2onnx]),
+    I("BOSS: Warden write-up + final flagship README and demo", "3-way comparison table for Warden. Fill every placeholder number on your resume with real results.", "", true)
   ],
   "cc-redis": [
-    I("Set up CodeCrafters (TypeScript or Go); first stage: bind to a port", "Redis is free until 31 Dec 2026, so do it now.", [X.ccRedis]),
+    I("Set up CodeCrafters in Go; first stage: bind to a port", "Go backs up the Go on your resume. Redis is free until 31 Dec 2026, so it's scheduled to finish by then. Write every line yourself, no AI.", [X.ccRedis]),
     I("Respond to PING, multiple PINGs, concurrent clients", "This is the event loop. Understand it, don't just pass tests.", [X.ccRedis, X.redisResp]),
     I("ECHO + a proper RESP parser", "", [X.redisResp, X.ccRedis]),
     I("SET / GET + key expiry", "", [rcmd("set"), rcmd("get"), X.ccRedis]),
-    I("Write-up: real Redis' event loop vs yours; refactor", "", [X.redisResp]),
-    I("RDB persistence: read config, read keys from an RDB file", "", [X.rdb, X.redisPersist, X.ccRedis]),
-    I("RDB persistence: values and expiry from file", "", [X.rdb, X.ccRedis]),
+    I("Write-up: real Redis' event loop vs yours; refactor", "Read the real source for this part before writing.", [X.redisResp]),
+    I("RDB persistence: config, keys, values and expiry from file", "", [X.rdb, X.redisPersist, X.ccRedis]),
     I("Replication: the handshake", "Ties straight into system design replication.", [X.redisRepl, rcmd("psync"), X.ccRedis]),
     I("Replication: propagate commands to replicas", "", [X.redisRepl, X.ccRedis]),
-    I("Replication: offsets and WAIT", "", [rcmd("wait"), X.redisRepl, X.ccRedis]),
-    I("Replication wrap-up + write-up: how leader-follower replication really works", "", [X.redisRepl]),
+    I("Replication: offsets and WAIT + write-up on how leader-follower really works", "", [rcmd("wait"), X.redisRepl, X.ccRedis]),
     I("Lists: push, range + blocking pops", "", [rcmd("rpush"), rcmd("lrange"), rcmd("blpop"), X.ccRedis]),
     I("Streams: add, range + blocking reads", "", [rcmd("xadd"), rcmd("xrange"), rcmd("xread"), X.ccRedis]),
     I("Transactions: MULTI / EXEC / DISCARD", "", [rcmd("multi"), rcmd("exec"), X.ccRedis]),
-    I("Pub/Sub", "", [rcmd("subscribe"), rcmd("publish"), X.ccRedis]),
-    I("Sorted sets + remaining stages", "", [rcmd("zadd"), rcmd("zrange"), rcmd("geoadd"), X.ccRedis]),
-    I("BOSS: Redis complete + README", "Architecture notes, what you'd do differently, what real Redis does better.", [X.ccRedis, X.redisTypes], true)
+    I("Pub/Sub + sorted sets", "", [rcmd("subscribe"), rcmd("publish"), rcmd("zadd"), rcmd("zrange"), X.ccRedis]),
+    I("BOSS: Redis complete + benchmark vs real Redis + README", "Run redis-benchmark against yours and the real one, explain the gap. README: architecture, what you'd do differently, what real Redis does better.", [X.ccRedis, X.redisTypes], true)
   ],
   "cc-kafka": [
-    I("Kafka concepts first: log, partitions, offsets, consumer groups; start the challenge", "", [X.kafkaDesign, X.ccKafka]),
+    I("Kafka concepts first: log, partitions, offsets, consumer groups; start the challenge in Go", "", [X.kafkaDesign, X.ccKafka]),
     I("Kafka: wire protocol + request parsing", "", [X.kafkaProto, X.ccKafka]),
     I("Kafka: next stages (API versions)", "", [X.kafkaProto, X.ccKafka]),
     I("Kafka: multiple and concurrent requests", "", [X.ccKafka]),
@@ -893,12 +864,9 @@ var Q = {
     I("Kafka: fetching messages from the on-disk log", "", [X.kafkaDesign, X.ccKafka]),
     I("Kafka: multiple messages", "", [X.ccKafka]),
     I("Kafka: remaining stages", "", [X.ccKafka]),
-    I("Kafka: remaining stages", "", [X.ccKafka]),
     I("Write-up: how real Kafka gets its throughput", "Sequential I/O, batching, zero-copy, page cache.", [X.kafkaDesign]),
-    I("Compare Kafka vs SQS vs Redis Streams", "When you'd pick each one in a design interview.", [dd("kafka","Kafka"), X.sqsDlq, rcmd("xadd")]),
-    I("Refactor your Redis code with what LLD taught you", "Interfaces, smaller classes, unit tests. Same behaviour, cleaner code.", [X.ccRedis, ["AlgoMaster: SOLID principles with code", "https://blog.algomaster.io/p/solid-principles-explained-with-code"]]),
-    I("Refactor your Kafka code the same way", "", [X.ccKafka]),
-    I("Final README pass on both builds", "Architecture diagram, what you learned, what real Redis/Kafka do better.", [X.redisRepl, X.kafkaDesign]),
+    I("Refactor your Redis and Kafka code with what LLD taught you", "Interfaces, smaller types, unit tests. Same behaviour, cleaner code.", [X.ccRedis, X.ccKafka]),
+    I("Final README pass on both builds", "Architecture diagram, what you learned, what real Redis/Kafka do better. Pin both on GitHub.", [X.redisRepl, X.kafkaDesign]),
     I("BOSS: Kafka complete + README", "", [X.ccKafka], true)
   ],
   "cc-sqlite": [
@@ -921,21 +889,20 @@ var Q = {
     I("Write your 'why' and your target", "Roles, cities (remote, NCR, abroad), salary floor, notice period. One page."),
     I("Target list: 25 companies (remote-first or outside Bengaluru)", "Use your Job Search Targets note as a start."),
     I("Resume v2: headline + summary for 'Backend + AI engineer'", ""),
-    I("Weekly review: plan next week in this tracker", "Check the catch-up queue. Decide what to cut if you're behind."),
     I("Resume: rewrite experience bullets with impact numbers", "Action, what you built, the measurable result."),
+    I("Resume: replace Game Hub and KanbanFlow with the flagship + Warden", "Draft both entries now with placeholder numbers; the projects fill them in."),
     I("LinkedIn: headline, About, Featured section", ""),
-    I("GitHub profile README + pin Warden and the Memory Layer", ""),
+    I("GitHub profile README + pin Warden, the Memory Layer and your Redis build", ""),
     I("Warden README: architecture, eval numbers, demo GIF", ""),
     I("Build-in-public post #1: what you're starting and why", "Short and honest. Recruiters notice consistency."),
     I("Freelance profile on Upwork / Contra: title, overview, portfolio", ""),
-    I("Weekly review: plan next week", ""),
     I("Write your freelance offer: 3 packages", "LLM gateway, grounded document chatbot, AI guardrails."),
     I("Memory Layer README polish", ""),
     I("List 30 people to reach out to (EMs, founders at targets)", ""),
     I("Write 3 referral message templates", ""),
     I("Build-in-public post #2: what micrograd taught you", ""),
     I("Write 5 STAR stories", "Ownership, conflict, failure, production incident, ambiguity."),
-    I("Weekly review: plan next week", ""),
+    I("Your role-change story: Program Manager, then back to engineering", "Why you took the role, what you led, why you came back. 60 seconds, said out loud until it sounds like a strength."),
     I("Write 5 more STAR stories + a 90-second 'tell me about yourself'", "Say it out loud until it sounds natural.")
   ]
 };
@@ -952,29 +919,23 @@ var LLD_TIMED = "Machine-coding round, 90 min timed, in TypeScript: requirements
 var LLD_LEARN = "Read, then build a tiny TypeScript example of each idea yourself (no copy-paste). Done when you can explain when to use it and when not to.";
 Q["lld-found"] = [
   I("OOP in TypeScript + SOLID: refactor a messy class", LLD_LEARN, [hl("in-a-hurry/oop-concepts","OOP Concepts"), hl("in-a-hurry/design-principles","Design Principles"), ["AlgoMaster: SOLID principles with code", "https://blog.algomaster.io/p/solid-principles-explained-with-code"]]),
-  I("Creational patterns: Factory, Builder, Singleton (and when not to)", LLD_LEARN, [am("factory-method","Factory Method"), am("builder","Builder"), am("singleton","Singleton"), hl("in-a-hurry/patterns","Design Patterns"), ["RefactoringGuru: patterns in TypeScript (repo)", "https://github.com/RefactoringGuru/design-patterns-typescript"]]),
-  I("Structural patterns: Adapter, Decorator, Facade, Proxy", LLD_LEARN, [am("adapter","Adapter"), am("decorator","Decorator"), am("facade","Facade"), am("proxy","Proxy"), ["RefactoringGuru: patterns in TypeScript (repo)", "https://github.com/RefactoringGuru/design-patterns-typescript"]]),
+  I("Creational + structural patterns: Factory, Builder, Singleton, Adapter, Decorator, Facade, Proxy", LLD_LEARN, [am("factory-method","Factory Method"), am("builder","Builder"), am("adapter","Adapter"), am("decorator","Decorator"), hl("in-a-hurry/patterns","Design Patterns"), ["RefactoringGuru: patterns in TypeScript (repo)", "https://github.com/RefactoringGuru/design-patterns-typescript"]]),
   I("Behavioral patterns: Strategy, Observer, State, Command, Chain of Responsibility", LLD_LEARN, [am("strategy","Strategy"), am("observer","Observer"), am("state","State"), am("command","Command"), am("chain-of-responsibility","Chain of Responsibility"), ["RefactoringGuru: patterns in TypeScript (repo)", "https://github.com/RefactoringGuru/design-patterns-typescript"]]),
   I("Concurrency in LLD: race conditions, locks, idempotency in async TypeScript", LLD_LEARN, [hl("concurrency/intro","Concurrency intro"), hl("concurrency/correctness","Correctness"), hl("concurrency/coordination","Coordination"), hl("concurrency/scarcity","Scarcity")]),
   I("How to run a 90-min machine-coding round + warm-up: Connect Four (untimed)", "Learn the delivery framework, then build Connect Four slowly and cleanly. Speed comes later.", [hl("in-a-hurry/delivery","Delivery Framework"), hl("problem-breakdowns/connect-four","Connect Four"), ["AlgoMaster: How to answer an LLD interview problem", "https://blog.algomaster.io/p/how-to-answer-a-lld-interview-problem"]])
 ];
 Q["lld-code"] = [
+  I("Machine coding: Rate limiter (token bucket + sliding window)", LLD_TIMED + " FLAGSHIP MODULE: afterwards, refactor your gateway's rate limiter to this design.", [hl("problem-breakdowns/rate-limiter","Rate Limiter")]),
+  I("Machine coding: LLM provider router (Strategy + Adapter + circuit breaker)", LLD_TIMED + " FLAGSHIP MODULE: afterwards, refactor your gateway's provider routing to this design.", [am("strategy","Strategy"), am("adapter","Adapter"), ["AWS: Exponential backoff and jitter", "https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/"]]),
   I("Machine coding: Parking lot", LLD_TIMED, [hl("problem-breakdowns/parking-lot","Parking Lot"), lrp("parking-lot","Parking Lot")]),
   I("Machine coding: LRU cache with TTL", LLD_TIMED + " Reuses what you built in Redis.", [lrp("lru-cache","LRU Cache"), amc("design-thread-safe-cache-with-ttl","Thread-safe cache with TTL")]),
-  I("Machine coding: Rate limiter (token bucket + sliding window)", LLD_TIMED + " FLAGSHIP MODULE: this becomes your AI platform's rate limiter.", [hl("problem-breakdowns/rate-limiter","Rate Limiter")]),
-  I("Machine coding: Logging framework", LLD_TIMED, [hl("problem-breakdowns/logging-service","Logging Service"), lrp("logging-framework","Logging Framework")]),
-  I("Machine coding: Splitwise", LLD_TIMED, [lrp("splitwise","Splitwise")]),
+  I("Machine coding: Job scheduler with retries", LLD_TIMED + " FLAGSHIP MODULE: becomes your platform's background-job runner.", [amc("producer-consumer-pattern","Producer-Consumer"), amc("thread-pool-pattern","Thread Pool"), lrp("task-management-system","Task Management System")]),
   I("Machine coding: In-memory pub/sub queue", LLD_TIMED + " Reuses what you're learning in Kafka.", [lrp("pub-sub-system","Pub Sub System")]),
+  I("Machine coding: Agent tool registry / plugin system", LLD_TIMED + " FLAGSHIP MODULE: how your agent discovers and calls tools.", [am("command","Command"), am("factory-method","Factory Method"), ["Anthropic: Writing effective tools for agents", "https://www.anthropic.com/research/writing-tools-for-agents"]]),
   I("Machine coding: Elevator system", LLD_TIMED, [hl("problem-breakdowns/elevator","Elevator"), lrp("elevator-system","Elevator System")]),
   I("Machine coding: BookMyShow (seat locking under concurrency)", LLD_TIMED, [hl("problem-breakdowns/bookmyshow","Movie Ticket Booking"), lrp("movie-ticket-booking-system","Movie Ticket Booking")]),
-  I("Machine coding: Amazon Locker", LLD_TIMED, [hl("problem-breakdowns/amazon-locker","Amazon Locker")]),
-  I("Speed run: Snake & ladder in 60 minutes", "Same steps, 60 minutes. Interviews reward a working core early.", [lrp("snake-and-ladder","Snake and Ladder")]),
-  I("Machine coding: Job scheduler with retries", LLD_TIMED + " FLAGSHIP MODULE: becomes your platform's background-job runner.", [amc("producer-consumer-pattern","Producer-Consumer"), amc("thread-pool-pattern","Thread Pool"), lrp("task-management-system","Task Management System")]),
-  I("Machine coding: Key-value store with transactions", LLD_TIMED + " Reuses what you learned building Redis.", [hl("concurrency/correctness","Correctness"), rcmd("multi"), rcmd("watch")]),
   I("Machine coding: Notification service (Observer + Strategy)", LLD_TIMED, [am("observer","Observer"), am("strategy","Strategy")]),
-  I("Machine coding: Inventory management", LLD_TIMED, [hl("problem-breakdowns/inventory-management","Inventory Management")]),
-  I("Machine coding: LLM provider router (Strategy + Adapter + circuit breaker)", LLD_TIMED + " FLAGSHIP MODULE: routes requests across model providers with fallback.", [am("strategy","Strategy"), am("adapter","Adapter"), ["AWS: Exponential backoff and jitter", "https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/"]]),
-  I("Machine coding: Agent tool registry / plugin system", LLD_TIMED + " FLAGSHIP MODULE: how your agent discovers and calls tools.", [am("command","Command"), am("factory-method","Factory Method"), ["Anthropic: Writing effective tools for agents", "https://www.anthropic.com/research/writing-tools-for-agents"]]),
+  I("Machine coding: Key-value store with transactions", LLD_TIMED + " Reuses what you learned building Redis.", [hl("concurrency/correctness","Correctness"), rcmd("multi"), rcmd("watch")]),
   I("BOSS: Mock LLD interview - File System, 90 min, recorded", "Treat it like the real round. Watch the recording and list 5 fixes.", [hl("problem-breakdowns/file-system","File System (compare after)"), hl("in-a-hurry/delivery","Delivery Framework")], true),
   I("Flagship design review: class diagrams for your 4 flagship modules", "Rate limiter, job runner, provider router, tool registry. One clean diagram each; this goes into the flagship README.", [am("class-diagram","Class Diagram")])
 ];
@@ -986,7 +947,7 @@ var CAREER_ROT = {
     3: I("Send 2 freelance pitches or proposals", "Lead with a specific result from your projects."),
     4: I("Apply to 3 roles", ""),
     5: I("Build-in-public post about this week's project", ""),
-    6: I("AI-assisted coding practice: 60 min in an unfamiliar repo", "Fix a bug or add a feature with Claude Code/Cursor, talking out loud. Read before you prompt; verify everything."),
+    6: I("AI-assisted coding practice: 30 min in an unfamiliar repo", "Fix a bug or add a feature with Claude Code/Cursor, talking out loud. Read before you prompt; verify everything."),
     0: I("Weekly review: plan next week, follow up on applications", "")
   },
   intv: {
@@ -995,9 +956,14 @@ var CAREER_ROT = {
     3: I("Freelance: 2 pitches, or client work", ""),
     4: I("Apply to 3 roles + prep for any scheduled interviews", "Research each company's interview format before the loop."),
     5: I("Build-in-public post", ""),
-    6: I("AI-assisted coding practice: 60 min in an unfamiliar repo", "Record it. Review how you prompted and what you verified."),
+    6: I("AI-assisted coding practice: 30 min in an unfamiliar repo", "Record it. Review how you prompted and what you verified."),
     0: I("Weekly review + log what every interview asked", "Your interview log is next week's study plan.")
   }
+};
+var CAREER_FOUND_SUN = I("Weekly review: plan next week in this tracker", "20 minutes, then the rest of Sunday is off. Check the catch-up queue and decide what to cut if you're behind.");
+var CAREER_ON = {
+  "2027-01-16": I("Resume + portfolio refresh before top-target applications", "Swap in the flagship gateway and Warden with real numbers, update LinkedIn Featured and your GitHub pins. Top-target applications start Monday."),
+  "2027-02-27": I("Resume: update the flagship entry with RAG and agent numbers", "Recall@5 before/after, refusal rate, agent success rate. Keep it to 3 bullets.")
 };
 var SIDE_POOL = [
   ["Read one engineering blog post from the Library; write 3 takeaways", 20],
@@ -1157,10 +1123,10 @@ function daysBetween(a, b){ return Math.round((parseIso(b) - parseIso(a)) / 8640
 // =====================================================================
 var BODY = { start: 93, goal: 82, heightCm: 183 };
 var TPH = [
-  { id:"found",    name:"Foundation",  from:"2026-11-23", to:"2026-12-20", note:"Learn the lifts, moderate weights, 2-3 reps left in the tank on every set." },
-  { id:"build",    name:"Build",       from:"2026-12-21", to:"2027-01-10", note:"Add a set and add load whenever you hit the top of the rep range." },
-  { id:"deload1",  name:"Deload",      from:"2027-01-11", to:"2027-01-17", note:"Half the sets, ~60% weight. Let joints and nervous system recover." },
-  { id:"strength", name:"Strength",    from:"2027-01-18", to:"2027-02-21", note:"Heavier 5x5 on the big lifts; this is what keeps muscle while you diet." },
+  { id:"found",    name:"Foundation",  from:"2026-11-23", to:"2026-12-27", note:"Learn the lifts, moderate weights, 2-3 reps left in the tank on every set." },
+  { id:"deload1",  name:"Deload",      from:"2026-12-28", to:"2027-01-03", note:"Holiday week: half the sets, ~60% weight. Body and brain both rest." },
+  { id:"build",    name:"Build",       from:"2027-01-04", to:"2027-01-24", note:"Add a set and add load whenever you hit the top of the rep range." },
+  { id:"strength", name:"Strength",    from:"2027-01-25", to:"2027-02-21", note:"Heavier 5x5 on the big lifts; this is what keeps muscle while you diet." },
   { id:"deload2",  name:"Deload",      from:"2027-02-22", to:"2027-02-28", note:"Back off again before the final push." },
   { id:"peak",     name:"Peak & test", from:"2027-03-01", to:"2027-03-14", note:"One hard week, then test a heavy 5-rep set and re-measure." }
 ];
@@ -1226,32 +1192,43 @@ var DATES = [], PLAN = {}, SIDES = {}, ALL = [], SIDEALL = [], BYID = {};
   var ptr = {};
   function take(key){ ptr[key] = ptr[key] || 0; var arr = Q[key] || []; return arr[ptr[key]++] || null; }
   for (var n=0; n<NDAYS; n++){
-    var d = addDays(START, n), ds = iso(d), dow = d.getDay(), tasks = [];
+    var d = addDays(START, n), ds = iso(d), dow = d.getDay(), tasks = [], light = lightWeek(ds), wk = Math.floor(n / 7);
     var push = function(track, item, xp, mins){
       if (!item) item = I("Buffer: clear your catch-up queue or polish a write-up", "Nothing new today on this track. Close gaps instead.");
       var t = { id: ds + "-" + track, date: ds, track: track, t: item.t, d: item.d, l: item.l, boss: item.boss, xp: item.boss ? xp*3 : xp, mins: mins };
       t.phase = track === "move" ? "" : phaseOf(track, ds).id;
       tasks.push(t); ALL.push(t); BYID[t.id] = t;
     };
-    var sp = phaseOf("sd", ds).id, sdItem, sdXP = 30, sdMin = 90;
-    if (sp === "prob") {
-      if (dow===1||dow===2||dow===4) sdItem = take("sd-prob-q");
-      else if (dow===3) sdItem = take("sd-prob-aisd");
-      else if (dow===5) sdItem = take("sd-prob-fri");
-      else if (dow===6) { sdItem = take("sd-prob-sat"); sdXP = 50; sdMin = 75; }
-      else { sdItem = take("sd-prob-sun"); sdXP = 30; sdMin = 60; }
-    } else {
-      if (dow===6) { sdItem = take("sd-" + sp + "-sat"); sdXP = 50; sdMin = 60; }
-      else if (dow===0) { sdItem = take("sd-" + sp + "-sun"); sdXP = ds >= "2026-12-21" ? 30 : 40; sdMin = ds >= "2026-12-21" ? 60 : 120; }
-      else sdItem = take("sd-" + sp + "-wk");
+    var sp = phaseOf("sd", ds).id, lldOn = ds >= "2026-12-21";
+    var sdKey = function(){ return sp === "prob" ? (dow === 3 ? "sd-prob-aisd" : "sd-prob-q") : "sd-" + sp + "-wk"; };
+    var ai = function(xp, mins){ push("ai", take("ai-" + phaseOf("ai", ds).id), xp, mins); };
+    var cc = function(xp, mins){ push("cc", take("cc-" + phaseOf("cc", ds).id), xp, mins); };
+    var lld = function(xp, mins){ push("lld", take("lld-" + phaseOf("lld", ds).id), xp, mins); };
+    if (light) {
+      // Holiday week: one short block a day, Friday to Sunday off.
+      if (dow === 1) push("sd", take(sdKey()), 30, 60);
+      else if (dow === 2) cc(30, 60);
+      else if (dow === 3) ai(30, 75);
+      else if (dow === 4) lld(30, 60);
+      else if (dow === 6) ai(40, 120);
+    } else if (dow >= 1 && dow <= 4) {
+      // Mon-Thu: system design 60 + one deep track 75.
+      push("sd", take(sdKey()), 30, 60);
+      if (dow === 1 || dow === 3) ai(30, 75);
+      else if (dow === 2 || !lldOn) cc(30, 75);
+      else lld(30, 75);
+    } else if (dow === 5) {
+      push("sd", take("sd-" + sp + "-fri"), 20, 45);
+    } else if (dow === 6) {
+      // Saturday build day: long AI build, one design out loud, CodeCrafters or LLD on alternate weeks.
+      push("sd", take("sd-" + sp + "-sat"), 50, 60);
+      ai(60, 180);
+      if (lldOn && wk % 2 === 0) lld(40, 75); else cc(40, 75);
     }
-    push("sd", sdItem, sdXP, sdMin);
-    if (dow===1||dow===3||dow===5||dow===6) push("ai", take("ai-" + phaseOf("ai", ds).id), dow===6 ? 60 : 30, dow===6 ? 180 : 90);
-    var lldOn = ds >= "2026-12-21";
-    if (dow===2||dow===6||(dow===4 && !lldOn)) push("cc", take("cc-" + phaseOf("cc", ds).id), dow===6 ? 40 : 30, dow===6 ? 120 : 90);
-    if (lldOn && (dow===4||dow===0)) push("lld", take("lld-" + phaseOf("lld", ds).id), dow===0 ? 40 : 30, 90);
-    var cp = phaseOf("career", ds).id;
-    push("career", cp === "found" ? take("career-found") : CAREER_ROT[cp][dow], (dow===6||dow===0) ? 20 : 15, (cp!=="found" && dow===6) ? 60 : 25);
+    var cp = phaseOf("career", ds).id, citem;
+    if (dow === 0) citem = cp === "found" ? CAREER_FOUND_SUN : CAREER_ROT[cp][0];
+    else citem = CAREER_ON[ds] || (cp === "found" ? take("career-found") : CAREER_ROT[cp][dow]);
+    push("career", citem, (dow===6||dow===0) ? 20 : 15, dow === 6 ? 30 : (dow === 0 ? 20 : 15));
     var mv = moveFor(ds, dow); push("move", mv.item, mv.xp, mv.mins);
     var sides = [], L = SIDE_POOL.length;
     var mk = function(k, arr){ var s = { id: ds + "-side-" + k, date: ds, track:"side", t: arr[0], xp: arr[1], side:true }; sides.push(s); SIDEALL.push(s); BYID[s.id] = s; };
@@ -1270,7 +1247,7 @@ var BOSSES = ALL.filter(function(t){ return t.boss; }).map(function(t){ return {
 var DEFAULT_REWARDS = [
   { id:"r1", name:"Guilt-free movie night", cost:250 },
   { id:"r2", name:"Order your favourite food", cost:350 },
-  { id:"r3", name:"A full lazy Sunday, zero quests", cost:600 },
+  { id:"r3", name:"Skip a Saturday build day, guilt-free", cost:600 },
   { id:"r4", name:"Weekend trip out of the city", cost:1500 },
   { id:"r5", name:"Buy that book or gadget you've been eyeing", cost:2200 }
 ];
