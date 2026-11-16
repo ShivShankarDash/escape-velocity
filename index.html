@@ -364,7 +364,7 @@ table.sc td.tot { font-family:var(--mono); background:#fef3c7; cursor:default; }
     <div class="card" style="margin-bottom:16px">
       <div class="h">Weight trend</div>
       <div id="bodyChart"></div>
-      <div class="hint" style="margin-top:6px">Dots = daily weigh-ins. Blue line = 7-day average (the number to trust). Orange = the pace needed to hit 82 kg by 28 Feb (~0.7 kg/week). Honest expectation: 0.5-0.8 kg/week is healthy and sustainable, so landing at 84-86 kg by end of February and 82 kg in March is still a great result.</div>
+      <div class="hint" style="margin-top:6px">Dots = daily weigh-ins. Blue line = 7-day average (the number to trust). Orange = the pace needed to hit 82 kg by 14 Mar (~0.7 kg/week). Honest expectation: 0.5-0.8 kg/week is healthy and sustainable, so landing at 84-86 kg by end of February and 82 kg in March is still a great result.</div>
     </div>
     <div class="cols">
       <div>
@@ -451,10 +451,11 @@ table.sc td.tot { font-family:var(--mono); background:#fef3c7; cursor:default; }
 // =====================================================================
 // CONFIG
 // =====================================================================
-var START = new Date(2026, 10, 12);
-var NDAYS = 109;
-var WAVE = "2027-01-04";
-var KEY = "escape-velocity-v1";
+var START = new Date(2026, 10, 23);
+var NDAYS = 112;
+var WAVE = "2027-01-18";
+var KEY = "escape-velocity-v2";
+var EPOCH = "2026-11-23"; // bump with START to reset progress; synced state from another epoch is ignored
 var TRACKS = {
   sd:     { name:"System Design",  color:"#2563eb" },
   ai:     { name:"AI Engineering", color:"#7c3aed" },
@@ -486,31 +487,31 @@ function I(t, d, l, boss){ return { t:t, d:d || "", l:l || "", boss:!!boss }; }
 
 var PHASES = {
   sd: [
-    { id:"fund", name:"Fundamentals", from:"2026-11-12", to:"2026-12-06" },
-    { id:"pat",  name:"Patterns", from:"2026-12-07", to:"2027-01-03" },
-    { id:"prob", name:"Problems + mocks", from:"2027-01-04", to:"2027-02-28" }
+    { id:"fund", name:"Fundamentals", from:"2026-11-23", to:"2026-12-20" },
+    { id:"pat",  name:"Patterns", from:"2026-12-21", to:"2027-01-17" },
+    { id:"prob", name:"Problems + mocks", from:"2027-01-18", to:"2027-03-14" }
   ],
   ai: [
-    { id:"p1", name:"P1 LLM internals", from:"2026-11-12", to:"2026-12-06" },
-    { id:"p2", name:"P2 Inference", from:"2026-12-07", to:"2026-12-20" },
-    { id:"p3", name:"P3 LLM gateway", from:"2026-12-21", to:"2027-01-03" },
-    { id:"p4", name:"P4 Production RAG", from:"2027-01-04", to:"2027-01-24" },
-    { id:"p5", name:"P5 Agents", from:"2027-01-25", to:"2027-02-14" },
-    { id:"p6", name:"P6 Fine-tuning", from:"2027-02-15", to:"2027-02-28" }
+    { id:"p1", name:"P1 LLM internals", from:"2026-11-23", to:"2026-12-20" },
+    { id:"p2", name:"P2 Inference", from:"2026-12-21", to:"2027-01-03" },
+    { id:"p3", name:"P3 LLM gateway", from:"2027-01-04", to:"2027-01-17" },
+    { id:"p4", name:"P4 Production RAG", from:"2027-01-18", to:"2027-02-07" },
+    { id:"p5", name:"P5 Agents", from:"2027-02-08", to:"2027-02-28" },
+    { id:"p6", name:"P6 Fine-tuning", from:"2027-03-01", to:"2027-03-14" }
   ],
   cc: [
-    { id:"redis", name:"Redis", from:"2026-11-12", to:"2026-12-27" },
-    { id:"kafka", name:"Kafka", from:"2026-12-28", to:"2027-02-28" }
+    { id:"redis", name:"Redis", from:"2026-11-23", to:"2027-01-10" },
+    { id:"kafka", name:"Kafka", from:"2027-01-11", to:"2027-03-14" }
   ],
   lld: [
-    { id:"pre", name:"Starts 7 Dec", from:"2026-11-12", to:"2026-12-06" },
-    { id:"found", name:"LLD foundations", from:"2026-12-07", to:"2026-12-27" },
-    { id:"code", name:"Machine coding", from:"2026-12-28", to:"2027-02-28" }
+    { id:"pre", name:"Starts 21 Dec", from:"2026-11-23", to:"2026-12-20" },
+    { id:"found", name:"LLD foundations", from:"2026-12-21", to:"2027-01-10" },
+    { id:"code", name:"Machine coding", from:"2027-01-11", to:"2027-03-14" }
   ],
   career: [
-    { id:"found", name:"Foundations", from:"2026-11-12", to:"2026-11-30" },
-    { id:"pipe", name:"Pipeline", from:"2026-12-01", to:"2027-01-03" },
-    { id:"intv", name:"Interview mode", from:"2027-01-04", to:"2027-02-28" }
+    { id:"found", name:"Foundations", from:"2026-11-23", to:"2026-12-14" },
+    { id:"pipe", name:"Pipeline", from:"2026-12-15", to:"2027-01-17" },
+    { id:"intv", name:"Interview mode", from:"2027-01-18", to:"2027-03-14" }
   ]
 };
 
@@ -1156,17 +1157,17 @@ function daysBetween(a, b){ return Math.round((parseIso(b) - parseIso(a)) / 8640
 // =====================================================================
 var BODY = { start: 93, goal: 82, heightCm: 183 };
 var TPH = [
-  { id:"found",    name:"Foundation",  from:"2026-11-12", to:"2026-12-06", note:"Learn the lifts, moderate weights, 2-3 reps left in the tank on every set." },
-  { id:"build",    name:"Build",       from:"2026-12-07", to:"2026-12-27", note:"Add a set and add load whenever you hit the top of the rep range." },
-  { id:"deload1",  name:"Deload",      from:"2026-12-28", to:"2027-01-03", note:"Half the sets, ~60% weight. Let joints and nervous system recover." },
-  { id:"strength", name:"Strength",    from:"2027-01-04", to:"2027-02-07", note:"Heavier 5x5 on the big lifts; this is what keeps muscle while you diet." },
-  { id:"deload2",  name:"Deload",      from:"2027-02-08", to:"2027-02-14", note:"Back off again before the final push." },
-  { id:"peak",     name:"Peak & test", from:"2027-02-15", to:"2027-02-28", note:"One hard week, then test a heavy 5-rep set and re-measure." }
+  { id:"found",    name:"Foundation",  from:"2026-11-23", to:"2026-12-20", note:"Learn the lifts, moderate weights, 2-3 reps left in the tank on every set." },
+  { id:"build",    name:"Build",       from:"2026-12-21", to:"2027-01-10", note:"Add a set and add load whenever you hit the top of the rep range." },
+  { id:"deload1",  name:"Deload",      from:"2027-01-11", to:"2027-01-17", note:"Half the sets, ~60% weight. Let joints and nervous system recover." },
+  { id:"strength", name:"Strength",    from:"2027-01-18", to:"2027-02-21", note:"Heavier 5x5 on the big lifts; this is what keeps muscle while you diet." },
+  { id:"deload2",  name:"Deload",      from:"2027-02-22", to:"2027-02-28", note:"Back off again before the final push." },
+  { id:"peak",     name:"Peak & test", from:"2027-03-01", to:"2027-03-14", note:"One hard week, then test a heavy 5-rep set and re-measure." }
 ];
 function tphase(ds){ for (var i=0;i<TPH.length;i++) if (ds >= TPH[i].from && ds <= TPH[i].to) return TPH[i]; return TPH[TPH.length-1]; }
 var DAILY_BASICS = "Every day: 8-10k steps · ~160 g protein · 7+ hours sleep · weigh in after waking (log it below).";
 function gymMods(ph, ds){
-  var test = ph.id === "peak" && ds >= "2027-02-22";
+  var test = ph.id === "peak" && ds >= "2027-03-08";
   if (ph.id === "found")    return { m:"3 x 5, find your working weight (stop 2-3 reps short)", dl:"3 x 5, find your working weight", acc:1, fin:true, tag:"" };
   if (ph.id === "build")    return { m:"4 x 5", dl:"3 x 5", acc:1, fin:true, tag:"" };
   if (ph.id === "strength") return { m:"5 x 3 heavy (1-2 reps in reserve)", dl:"4 x 3 heavy", acc:1, fin:true, tag:"" };
@@ -1179,7 +1180,7 @@ var GYM_FOOT = "Hit every rep on a main lift? Add 2.5 kg next time (5 kg on squa
 function moveFor(ds, dow){
   var ph = tphase(ds), deload = ph.id.indexOf("deload") === 0, g = gymMods(ph, ds);
   if (dow === 2) {
-    var squatWeek = Math.floor(daysBetween("2026-11-16", ds) / 7) % 2 === 0;
+    var squatWeek = Math.floor(daysBetween("2026-11-30", ds) / 7) % 2 === 0;
     var body = squatWeek ?
       "1. Barbell back squat - " + g.m + "\n" +
       "2. Barbell Romanian deadlift - " + accSets(g, "8") + "\n" +
@@ -1241,12 +1242,12 @@ var DATES = [], PLAN = {}, SIDES = {}, ALL = [], SIDEALL = [], BYID = {};
       else { sdItem = take("sd-prob-sun"); sdXP = 30; sdMin = 60; }
     } else {
       if (dow===6) { sdItem = take("sd-" + sp + "-sat"); sdXP = 50; sdMin = 60; }
-      else if (dow===0) { sdItem = take("sd-" + sp + "-sun"); sdXP = ds >= "2026-12-07" ? 30 : 40; sdMin = ds >= "2026-12-07" ? 60 : 120; }
+      else if (dow===0) { sdItem = take("sd-" + sp + "-sun"); sdXP = ds >= "2026-12-21" ? 30 : 40; sdMin = ds >= "2026-12-21" ? 60 : 120; }
       else sdItem = take("sd-" + sp + "-wk");
     }
     push("sd", sdItem, sdXP, sdMin);
     if (dow===1||dow===3||dow===5||dow===6) push("ai", take("ai-" + phaseOf("ai", ds).id), dow===6 ? 60 : 30, dow===6 ? 180 : 90);
-    var lldOn = ds >= "2026-12-07";
+    var lldOn = ds >= "2026-12-21";
     if (dow===2||dow===6||(dow===4 && !lldOn)) push("cc", take("cc-" + phaseOf("cc", ds).id), dow===6 ? 40 : 30, dow===6 ? 120 : 90);
     if (lldOn && (dow===4||dow===0)) push("lld", take("lld-" + phaseOf("lld", ds).id), dow===0 ? 40 : 30, 90);
     var cp = phaseOf("career", ds).id;
@@ -1274,7 +1275,7 @@ var DEFAULT_REWARDS = [
   { id:"r5", name:"Buy that book or gadget you've been eyeing", cost:2200 }
 ];
 var mem = null;
-function freshState(){ return { done:{}, notes:{}, log:{}, name:"Player 1", sound:true, spent:0, rewards: DEFAULT_REWARDS.slice(), redeemed:[], ts:{}, logTs:{}, rmRewards:[], metaTs:0 }; }
+function freshState(){ return { epoch:EPOCH, done:{}, notes:{}, log:{}, name:"Player 1", sound:true, spent:0, rewards: DEFAULT_REWARDS.slice(), redeemed:[], ts:{}, logTs:{}, rmRewards:[], metaTs:0 }; }
 function load(){
   var s = null;
   try { var raw = localStorage.getItem(KEY); if (raw) s = JSON.parse(raw); } catch(e) {}
@@ -1452,7 +1453,7 @@ function renderHUD(){
   if (L.next) { $("xpFill").style.width = Math.min(100, (xp - L.base) / (L.next - L.base) * 100) + "%"; $("xpText").textContent = xp + " / " + L.next + " XP"; }
   else { $("xpFill").style.width = "100%"; $("xpText").textContent = xp + " XP · MAX"; }
   var rt = realToday();
-  $("sHole").textContent = rt < DATES[0] ? "Tee 12/11" : (rt > DATES[DATES.length-1] ? "18th green" : (DATES.indexOf(rt)+1) + "/" + NDAYS);
+  $("sHole").textContent = rt < DATES[0] ? "Tee 23/11" : (rt > DATES[DATES.length-1] ? "18th green" : (DATES.indexOf(rt)+1) + "/" + NDAYS);
   $("sStreak").textContent = currentStreak() + "d";
   $("sScore").textContent = fmtScore(courseScore());
   $("sBoss").textContent = BOSSES.filter(function(b){ return S.done[b.task.id]; }).length + "/" + BOSSES.length;
@@ -1768,7 +1769,7 @@ function renderBody(){
   function Y(v){ return pt + (hi - v) / (hi - lo) * (H - pt - pb); }
   var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">';
   for (var v = lo; v <= hi; v += 2.5) s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="#e2e8f0"/><text x="' + (pl - 6) + '" y="' + (Y(v) + 4) + '" text-anchor="end" font-size="11" fill="#5b5f7a">' + v + '</text>';
-  ["2026-12-01","2027-01-01","2027-02-01"].forEach(function(m){ s += '<line x1="' + X(m) + '" x2="' + X(m) + '" y1="' + pt + '" y2="' + (H - pb) + '" stroke="#cbd5e1" stroke-dasharray="4 4"/><text x="' + X(m) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#5b5f7a">' + MONS[parseIso(m).getMonth()].toUpperCase() + '</text>'; });
+  ["2026-12-01","2027-01-01","2027-02-01","2027-03-01"].forEach(function(m){ s += '<line x1="' + X(m) + '" x2="' + X(m) + '" y1="' + pt + '" y2="' + (H - pb) + '" stroke="#cbd5e1" stroke-dasharray="4 4"/><text x="' + X(m) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#5b5f7a">' + MONS[parseIso(m).getMonth()].toUpperCase() + '</text>'; });
   s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(BODY.goal) + '" y2="' + Y(BODY.goal) + '" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="8 5"/><text x="' + (W - pr - 4) + '" y="' + (Y(BODY.goal) - 6) + '" text-anchor="end" font-size="12" font-weight="900" fill="#16a34a">GOAL 82 kg</text>';
   s += '<line x1="' + X(DATES[0]) + '" y1="' + Y(BODY.start) + '" x2="' + X(DATES[NDAYS-1]) + '" y2="' + Y(BODY.goal) + '" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="3 5"/><text x="' + (pl + 8) + '" y="' + (Y(BODY.start) - 6) + '" font-size="11" font-weight="800" fill="#b45309">pace line (~0.7 kg/week)</text>';
   if (w.length) {
@@ -1909,7 +1910,7 @@ function syncNow(manual){
     if (g.owner && g.owner.login) CFG.owner = g.owner.login;
     return fileContent(g.files["state.json"]);
   }).then(function(txt){
-    if (txt) { var R = JSON.parse(txt); S = mergeState(S, R); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+    if (txt) { var R = JSON.parse(txt); if (R.epoch === EPOCH) S = mergeState(S, R); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
     return gh("PATCH", "/gists/" + CFG.gistId, payload());
   }).then(function(){
     CFG.last = Date.now(); saveCfg(CFG); setSyncStatus("Synced " + new Date().toLocaleTimeString());
